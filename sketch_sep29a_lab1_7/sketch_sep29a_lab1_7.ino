@@ -1,4 +1,10 @@
-int LED = 2;
+/*
+ * Conard James B. Faraon
+ * Pouria Ghadimi
+ * CSS427 Fall 2017 Lab1 Ex7
+ */
+ 
+const int LED = 2; //using pin D2
 int brightness = 0;
 int fadeAmount = 5;
 

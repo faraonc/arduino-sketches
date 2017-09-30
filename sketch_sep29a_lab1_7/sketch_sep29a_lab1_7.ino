@@ -9,7 +9,8 @@ int brightness = 0;
 int fadeAmount = 5;
 
 // the setup function runs once when you press reset or power the board
-void setup() {
+void setup() 
+{
   // initialize digital pin LED_BUILTIN as an output.
   pinMode(LED, OUTPUT);
 }

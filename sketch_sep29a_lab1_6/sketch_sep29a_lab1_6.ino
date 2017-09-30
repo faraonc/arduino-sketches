@@ -5,7 +5,8 @@
  */
 const int DELAY_LIMIT = 4000;
 // the setup function runs once when you press reset or power the board
-void setup() {
+void setup() 
+{
   // initialize digital pin LED_BUILTIN as an output.
   Serial.begin(9600); 
   pinMode(LED_BUILTIN, OUTPUT);

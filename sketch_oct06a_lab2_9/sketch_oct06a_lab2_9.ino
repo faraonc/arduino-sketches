@@ -12,6 +12,7 @@ const int PHOTOR_PIN = A1;
 const int MS = 1000;
 const String TEMP_PIN_STR = "A0";
 const String PHOTOR_PIN_STR = "A1";
+const String HEADER_BR = "**************************************************************************";
 
 int temperatureR;
 float temperatureC;
@@ -48,7 +49,6 @@ void setup()
 
 void reportTemperature()
 {
-  Serial.println();
   Serial.println("Temperature Sensor's Current Values:");
   Serial.print("Pin: ");
   Serial.println(TEMP_PIN_STR);
@@ -58,13 +58,12 @@ void reportTemperature()
   Serial.println(" deg F");
   Serial.print("Threshold: ");
   Serial.print(temperatureF_threshold);
-  Serial.println(" deg F");
+  Serial.println(" deg F\n");
   
 }
 
 void reportBrightness()
 {
-  Serial.println();
   Serial.println("Photocell Resistor Sensor's Current Values:");
   Serial.print("Pin: ");
   Serial.println(PHOTOR_PIN_STR);
@@ -129,12 +128,14 @@ static int report(struct pt *pt, int interval)
     PT_WAIT_UNTIL(pt, millis() - timestamp > interval );
     timestamp = millis(); // take a new timestamp
     Serial.println("PERIODIC REPORTING:");
+    Serial.println(HEADER_BR);
     reportTemperature();
     reportBrightness();
-    Serial.print("Report Interval is ");
+    Serial.print("FYI:Report Interval is ");
     Serial.print(interval / MS);
-    Serial.println(" sec");
-    Serial.println("Input positive integer to change the report interval\n");
+    Serial.println(" sec.");
+    Serial.println("Input positive integer to change the report interval.\n");
+    Serial.println(HEADER_BR);
   }
   PT_END(pt);
   
@@ -153,9 +154,10 @@ void loop()
     if(incomingByte <= 0)
     {
       Serial.println("ON-DEMAND REPORTING:");
+      Serial.println(HEADER_BR);
       reportTemperature();
       reportBrightness();
-    
+      Serial.println(HEADER_BR);
     }
     else
     {

@@ -52,6 +52,21 @@ void buzzDistance()
   
 }
 
+void beep(unsigned char delayms){
+  analogWrite(BUZZER_PIN, 10);      // Almost any value can be used except 0 and 255               
+                           // experiment to get the best tone
+  delay(delayms);          // wait for a delayms ms
+  analogWrite(BUZZER_PIN, 0);       // 0 turns it off
+  delay(delayms);          // wait for a delayms ms   
+}  
+
+
+void buzzBeep()
+{
+  unsigned char delay = 10 * distanceInch;
+  beep(delay);
+}
+
 void loop() 
 {
   /* The following trigPin/echoPin cycle is used to determine the
@@ -87,7 +102,8 @@ void loop()
     Serial.print(distanceCm);
     Serial.println(" cm");
     digitalWrite(LED_PIN, LOW); 
-    buzzDistance();
+    //buzzDistance();
+    buzzBeep();
   }
   
   //Delay 50ms before next reading.

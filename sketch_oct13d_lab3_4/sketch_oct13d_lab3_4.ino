@@ -32,8 +32,6 @@ void setup()
   digitalWrite(LED_BUILTIN, LOW);
 }
 
-
-
 void loop()
 {
   char key = keypad.getKey();
@@ -41,7 +39,6 @@ void loop()
   if (key != NO_KEY)
   {
     Serial.println(key);
-    
   }
 }
 
@@ -49,40 +46,32 @@ void keypadEvent(KeypadEvent key)
 {
   switch (keypad.getState())
   {
-    
     case PRESSED:
-      switch (key)
-      {
-        case '*': 
-          digitalWrite(LED_BUILTIN, LOW);
-          break;
-      }
-      break;
+    switch (key)
+    {
+      case '*': 
+        digitalWrite(LED_BUILTIN, LOW);
+        break;
+    }
+    break;
     
-//     case RELEASED:
-//       switch (key)
-//       {
-//         case '*': 
-//           digitalWrite(LED_BUILTIN,HIGH);
-//           blink = false;
-//         break;
-//       }
-//     break;
     case HOLD:
       switch (key)
       {
         case '#': 
-           unsigned long prevMillis = millis(); // grab current time
-           // check if "interval" time has passed (2000 milliseconds)
-           Serial.println("HERE");
-           while (keypad.getState() == HOLD  && ((unsigned long)(millis() - prevMillis)) < interval) 
-           {
-              if(((unsigned long)(millis() - prevMillis)) >= interval)
-              {
-                digitalWrite(LED_BUILTIN, HIGH);
-                break;
+          // grab current time
+          unsigned long prevMillis = millis();
+          
+          // check if "interval" time has passed (2000 milliseconds)
+          while (keypad.getState() == HOLD  && ((unsigned long)(millis() - prevMillis)) < interval) 
+          {
+            if(((unsigned long)(millis() - prevMillis)) >= interval)
+            {
+              digitalWrite(LED_BUILTIN, HIGH);
+              break;
               }
            }
+           
           break;
       }
     break;

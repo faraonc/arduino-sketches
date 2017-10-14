@@ -61,7 +61,6 @@ void keypadEvent(KeypadEvent key)
       {
         case '#': 
           digitalWrite(LED_BUILTIN, HIGH);
-          Serial.println("DONE");
       }
       break;
   }

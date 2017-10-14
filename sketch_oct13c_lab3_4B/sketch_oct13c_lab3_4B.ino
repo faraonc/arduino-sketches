@@ -7,11 +7,10 @@
  
 #include <Keypad.h>
 
-// constants won't change:
-const long BLINK_INTERVAL = 100;  
+const long BLINK_INTERVAL = 100;  //LED blink interval
 const unsigned long TIME_LIMIT = 4000; //user has 4 seconds to enter input or input resets
-const unsigned long DEBOUNCE_DELAY = 50; //button delay
-const String CODE = "2017427*";
+const unsigned long DEBOUNCE_DELAY = 50; //button debounce delay
+const String CODE = "2017427*"; //code to set the alarm
 const int BUTTON_PIN = 10;
 
 const byte ROWS = 4; //four rows
@@ -28,6 +27,7 @@ byte colPins[COLS] = {8, 7, 6}; //connect to the column pinouts of the keypad
 unsigned long previousMillisLED;        // will store last time LED was updated
 unsigned long previousMillisKey;        // will store last time a key was pressed
 unsigned long lastDebounceTime = 0;  // the last time the output pin was toggle
+
 char key;
 boolean blinkState;
 boolean alarmAck;

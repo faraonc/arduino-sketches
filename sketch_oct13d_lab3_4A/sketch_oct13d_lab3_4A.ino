@@ -1,13 +1,13 @@
 /*
  * Conard James B. Faraon
  * Pouria Ghadimi
- * CSS427 Fall 2017 Lab3 Ex4
+ * CSS427 Fall 2017 Lab3 Ex4A
  * Board used: Arduino Mega
  */
  
 #include <Keypad.h>
 
-unsigned long interval = 2000; // the time we need to wait
+const unsigned long INTERVAL = 2000; // the time we need to wait
 const byte ROWS = 4; //four rows
 const byte COLS = 3; //three columns
 char keys[ROWS][COLS] = {
@@ -20,7 +20,6 @@ byte rowPins[ROWS] = {5, 4, 3, 2}; //connect to the row pinouts of the keypad
 byte colPins[COLS] = {8, 7, 6}; //connect to the column pinouts of the keypad
 
 char key;
-boolean blink = false;
 
 Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
   
@@ -29,6 +28,7 @@ void setup()
   Serial.begin(9600);
   pinMode(LED_BUILTIN, OUTPUT);
   keypad.addEventListener(keypadEvent);
+  keypad.setHoldTime(INTERVAL);
   digitalWrite(LED_BUILTIN, LOW);
 }
 
@@ -40,6 +40,7 @@ void loop()
   {
     Serial.println(key);
   }
+  
 }
 
 void keypadEvent(KeypadEvent key)
@@ -59,22 +60,10 @@ void keypadEvent(KeypadEvent key)
       switch (key)
       {
         case '#': 
-          // grab current time
-          unsigned long prevMillis = millis();
-          
-          // check if "interval" time has passed (2000 milliseconds)
-          while (keypad.getState() == HOLD  && ((unsigned long)(millis() - prevMillis)) < interval) 
-          {
-            if(((unsigned long)(millis() - prevMillis)) >= interval)
-            {
-              digitalWrite(LED_BUILTIN, HIGH);
-              break;
-              }
-           }
-           
-          break;
+          digitalWrite(LED_BUILTIN, HIGH);
+          Serial.println("DONE");
       }
-    break;
+      break;
   }
 
 }

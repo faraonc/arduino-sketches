@@ -13,9 +13,10 @@ const int MIN_RANGE_INCH = 0;
 volatile long echoStart;
 volatile long echoEnd; 
 volatile long duration; 
+volatile boolean hasToRead;
 int distanceCm;
 int distanceInch;
-volatile boolean hasToRead;
+
 
 void setup() 
 {

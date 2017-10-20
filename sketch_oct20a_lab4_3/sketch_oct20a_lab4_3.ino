@@ -1,7 +1,7 @@
  /*
  * Conard James B. Faraon
  * Pouria Ghadimi
- * CSS427 Fall 2017 Lab4 Ex2
+ * CSS427 Fall 2017 Lab4 Ex3
  * Board used: Arduino Mega, Micro
  */
 
@@ -12,30 +12,25 @@
 #endif
 
 #include <Keypad.h>
-#include <SoftwareSerial.h>
 #include <Wire.h>
 #include <Adafruit_Sensor.h>
 #include <Adafruit_LSM303_U.h>
 
 enum {
-  UNO,
   MICRO,
   MEGA
 };
 
-// determine board type
-#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__)
-  int boardName = UNO;
-  Keypad keypad = Keypad( NULL, 0, 0, 0, 0 );
+int microAddr = 0x21;
+int megaAddr = 0x22;
   
-#elif defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
+#if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
   int boardName = MICRO;
   Keypad keypad = Keypad( NULL, 0, 0, 0, 0 );
-  SoftwareSerial mySerial(8,9);
   /* Assign a unique ID to this sensor at the same time */
   Adafruit_LSM303_Accel_Unified accel = Adafruit_LSM303_Accel_Unified(54321);
   Adafruit_LSM303_Mag_Unified mag = Adafruit_LSM303_Mag_Unified(12345);
-  
+    
 #elif defined(__AVR_ATmega1280__) || defined(__AVR_ATmega2560__)
   int boardName = MEGA;
   const byte ROWS = 4; //four rows
@@ -49,9 +44,9 @@ enum {
   byte rowPins[ROWS] = {5, 4, 3, 2};   //connect to the row pinouts of the keypad
   byte colPins[COLS] = {8, 7, 6};     //connect to the column pinouts of the keypad
   Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
-  SoftwareSerial mySerial(10,11);
   Adafruit_LSM303_Accel_Unified accel = Adafruit_LSM303_Accel_Unified(-1);
   Adafruit_LSM303_Mag_Unified mag = Adafruit_LSM303_Mag_Unified(-1);
+  
   
 #else 
   int boardName = -1;
@@ -74,6 +69,7 @@ void displaySensorDetails(void)
   Serial.println("");
   delay(500);
 }
+
 void readMag()
 {
   /* Get a new sensor event */
@@ -88,6 +84,7 @@ void readMag()
   /* Delay before the next sample */
   delay(500);
 }
+
 void readAccel()
 {
   /* Get a new sensor event */
@@ -102,10 +99,44 @@ void readAccel()
   
 }
 
+void eventReceiveHandler()
+{
+  Serial.println("Inside Handler");
+  if(boardName == MICRO)
+    {
+      Serial.print("MICRO TO PC: ");
+      char input = char(Wire.read());    // receive byte as an integer
+      switch(input)
+      {
+        case '1':
+        {
+          readAccel();
+          Serial.println(input);
+//           mySerial.write(key);
+          break;
+        }
+        case '2':
+        {
+          readMag();
+          Serial.println(input);
+//           mySerial.write(key);
+          break;
+        }
+        case '3':
+        {
+          readAccel();
+          readMag();
+          Serial.println(input);
+//           mySerial.write(key);
+          break;
+        }
+      
+      }
+    }
+}
+
 void setup() 
 {
-
-  mySerial.begin(9600);
   Serial.begin(9600);
   
   if(boardName == MICRO)
@@ -113,7 +144,7 @@ void setup()
      #ifndef ESP8266
         while (!Serial);     // will pause Zero, Leonardo, etc until serial console opens
      #endif
-  
+    
     /* Enable auto-gain */
     mag.enableAutoRange(true);
     
@@ -126,8 +157,15 @@ void setup()
     }
 
     /* Display some basic information on this sensor */
-     displaySensorDetails();
+    displaySensorDetails();
+    Wire.begin(microAddr);
   }
+  else if(boardName == MEGA)
+  {
+    Wire.begin(megaAddr);
+  }
+  
+  Wire.onReceive(eventReceiveHandler);
  
 }
 
@@ -139,52 +177,19 @@ void loop()
 
     if (key != NO_KEY)
     {
-      mySerial.write(key);
+        Wire.beginTransmission(microAddr);
+        Wire.write(key);
+        Wire.endTransmission();
+      
     }
     
-    if(mySerial.available())
-    {
-      Serial.print("MEGA TO PC, MICRO(ACK): ");
-      Serial.println(char(mySerial.read()));
-    }
+//     if(mySerial.available())
+//     {
+//       Serial.print("MEGA TO PC, MICRO(ACK): ");
+//       Serial.println(char(mySerial.read()));
+//     }
   }
-  else if(boardName == MICRO)
-  {
-    if(mySerial.available())
-    {
-      char key = char(mySerial.read());
-      
-      switch(key)
-      {
-        case '1':
-        {
-          Serial.print("MICRO TO PC: ");
-          Serial.println(key);
-          readAccel();
-          mySerial.write(key);
-          break;
-        }
-        case '2':
-        {
-          Serial.print("MICRO TO PC: ");
-          Serial.println(key);
-          readMag();
-          mySerial.write(key);
-          break;
-        }
-        case '3':
-        {
-          Serial.print("MICRO TO PC: ");
-          Serial.println(key);
-          readAccel();
-          readMag();
-          mySerial.write(key);
-          break;
-        }
-      
-      }
-    }
-  }
+
 }
 
 

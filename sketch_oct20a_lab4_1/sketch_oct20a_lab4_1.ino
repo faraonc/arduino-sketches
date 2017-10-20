@@ -1,3 +1,9 @@
+ * Conard James B. Faraon
+ * Pouria Ghadimi
+ * CSS427 Fall 2017 Lab4 Ex1
+ * Board used: Arduino Mega, Micro
+ */
+
 #if ARDUINO >= 100
   #include "Arduino.h"
 #else

@@ -16,14 +16,26 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_LSM303_U.h>
 
-enum {
+enum 
+{
   MICRO,
   MEGA
 };
 
-int microAddr = 0x21;
-int megaAddr = 0x22;
-  
+enum 
+{
+  LAZY,
+  ACCEL,
+  MAGNET,
+  BOTH
+};
+
+const int MICRO_ADDR = 8;
+const int MEGA_ADDR = 9;
+int state;  //state of what data to send
+char curr_ack;
+char ack[] = {'1','2','3'};
+
 #if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
   int boardName = MICRO;
   Keypad keypad = Keypad( NULL, 0, 0, 0, 0 );
@@ -35,7 +47,8 @@ int megaAddr = 0x22;
   int boardName = MEGA;
   const byte ROWS = 4; //four rows
   const byte COLS = 3; //three columns
-  char keys[ROWS][COLS] = {
+  char keys[ROWS][COLS] = 
+  {
     {'1','2','3'},
     {'4','5','6'},
     {'7','8','9'},
@@ -46,7 +59,6 @@ int megaAddr = 0x22;
   Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS );
   Adafruit_LSM303_Accel_Unified accel = Adafruit_LSM303_Accel_Unified(-1);
   Adafruit_LSM303_Mag_Unified mag = Adafruit_LSM303_Mag_Unified(-1);
-  
   
 #else 
   int boardName = -1;
@@ -75,12 +87,10 @@ void readMag()
   /* Get a new sensor event */
   sensors_event_t event;
   mag.getEvent(&event);
-
   /* Display the results (magnetic vector values are in micro-Tesla (uT)) */
   Serial.print("Magnetic Reading -> X: "); Serial.print(event.magnetic.x); Serial.print("  ");
   Serial.print("Y: "); Serial.print(event.magnetic.y); Serial.print("  ");
   Serial.print("Z: "); Serial.print(event.magnetic.z); Serial.print("  ");Serial.println("uT");
-
   /* Delay before the next sample */
   delay(500);
 }
@@ -96,77 +106,86 @@ void readAccel()
   Serial.print("Z: "); Serial.print(event.acceleration.z); Serial.print("  ");Serial.println("m/s^2 ");
   /* Delay before the next sample */
   delay(500);
-  
 }
 
-void eventReceiveHandler()
+void ackBack()
 {
-  Serial.println("Inside Handler");
+  Wire.beginTransmission(MEGA_ADDR);
+  Wire.write(curr_ack);
+  Wire.endTransmission();
+}
+
+void receiveEvent(int howMany)
+{
+  char input = char(Wire.read());    // receive byte as an integer
   if(boardName == MICRO)
+  { 
+    switch(input)
     {
-      Serial.print("MICRO TO PC: ");
-      char input = char(Wire.read());    // receive byte as an integer
-      switch(input)
+      case '1':
       {
-        case '1':
-        {
-          readAccel();
-          Serial.println(input);
-//           mySerial.write(key);
-          break;
-        }
-        case '2':
-        {
-          readMag();
-          Serial.println(input);
-//           mySerial.write(key);
-          break;
-        }
-        case '3':
-        {
-          readAccel();
-          readMag();
-          Serial.println(input);
-//           mySerial.write(key);
-          break;
-        }
-      
+        Serial.print("MICRO TO PC: ");
+        Serial.println(input);
+        state = ACCEL;
+        curr_ack = ack[0];
+        break;
+      }
+      case '2':
+      {
+        Serial.print("MICRO TO PC: ");
+        Serial.println(input);
+        state = MAGNET;
+        curr_ack = ack[1];
+        break;
+      }
+      case '3':
+      {
+        Serial.print("MICRO TO PC: ");
+        Serial.println(input);
+        state = BOTH;
+        curr_ack = ack[2];
+        break;
       }
     }
+  }
+  else if(boardName == MEGA)
+  {
+    Serial.print("MEGA TO PC, MICRO(ACK): ");
+    Serial.println(input);
+  }
 }
 
 void setup() 
 {
   Serial.begin(9600);
-  
+  state = LAZY;
   if(boardName == MICRO)
   {
-     #ifndef ESP8266
-        while (!Serial);     // will pause Zero, Leonardo, etc until serial console opens
-     #endif
+    #ifndef ESP8266
+      while (!Serial);     // will pause Zero, Leonardo, etc until serial console opens
+    #endif
     
     /* Enable auto-gain */
     mag.enableAutoRange(true);
     
-  /* Initialise the sensor */
+    /* Initialise the sensor */
     if(!accel.begin() || !mag.begin())
     {
-        /* There was a problem detecting the ADXL345 ... check your connections */
-       Serial.println("Ooops, no LSM303 detected ... Check your wiring!");
-       while(1);
+      /* There was a problem detecting the ADXL345 ... check your connections */
+      Serial.println("Ooops, no LSM303 detected ... Check your wiring!");
+      while(1);
     }
-
+    
     /* Display some basic information on this sensor */
     displaySensorDetails();
-    Wire.begin(microAddr);
+    Wire.begin(MICRO_ADDR);
   }
   else if(boardName == MEGA)
   {
-    Wire.begin(megaAddr);
+    Wire.begin(MEGA_ADDR);
   }
   
-  Wire.onReceive(eventReceiveHandler);
- 
+  Wire.onReceive(receiveEvent);
 }
 
 void loop() 
@@ -174,26 +193,36 @@ void loop()
   if(boardName == MEGA)
   {
     char key = keypad.getKey();
-
+    
     if (key != NO_KEY)
     {
-        Wire.beginTransmission(microAddr);
-        Wire.write(key);
-        Wire.endTransmission();
-      
+      Wire.beginTransmission(MICRO_ADDR);
+      Wire.write(key);
+      Wire.endTransmission();
     }
-    
-//     if(mySerial.available())
-//     {
-//       Serial.print("MEGA TO PC, MICRO(ACK): ");
-//       Serial.println(char(mySerial.read()));
-//     }
+  }
+  else if(boardName == MICRO && state != LAZY)
+  {
+    if(state == ACCEL)
+    {
+      readAccel();
+      ackBack();
+    }
+    else if(state == MAGNET)
+    {
+      readMag();
+      ackBack();
+    }
+    else if(state == BOTH)
+    {
+      readAccel();
+      readMag();
+      ackBack();
+    }
+    //reset our send state
+    state = LAZY;
   }
 
 }
-
-
-
-
 
 

@@ -17,7 +17,8 @@
 #include <Adafruit_Sensor.h>
 #include <Adafruit_LSM303_U.h>
 
-enum {
+enum 
+{
   UNO,
   MICRO,
   MEGA
@@ -79,12 +80,10 @@ void readMag()
   /* Get a new sensor event */
   sensors_event_t event;
   mag.getEvent(&event);
-
   /* Display the results (magnetic vector values are in micro-Tesla (uT)) */
   Serial.print("Magnetic Reading -> X: "); Serial.print(event.magnetic.x); Serial.print("  ");
   Serial.print("Y: "); Serial.print(event.magnetic.y); Serial.print("  ");
   Serial.print("Z: "); Serial.print(event.magnetic.z); Serial.print("  ");Serial.println("uT");
-
   /* Delay before the next sample */
   delay(500);
 }
@@ -186,9 +185,4 @@ void loop()
     }
   }
 }
-
-
-
-
-
 

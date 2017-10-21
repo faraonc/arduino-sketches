@@ -1,4 +1,4 @@
- * Conard James B. Faraon
+ /* Conard James B. Faraon
  * Pouria Ghadimi
  * CSS427 Fall 2017 Lab4 Ex1
  * Board used: Arduino Mega, Micro
@@ -49,9 +49,6 @@ enum {
 
 #endif
 
-//between MICRO and MEGA
-
-
 void setup() 
 {
 
@@ -88,9 +85,4 @@ void loop()
     }
   }
 }
-
-
-
-
-
 

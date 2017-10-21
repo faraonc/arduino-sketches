@@ -20,11 +20,7 @@ enum {
 };
 
 // determine board type
-#if defined(__AVR_ATmega328P__) || defined(__AVR_ATmega168__)
-  int boardName = UNO;
-  Keypad keypad = Keypad( NULL, 0, 0, 0, 0 );
-  
-#elif defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
+#if defined(__AVR_ATmega32U4__) || defined(__AVR_ATmega16U4__)
   int boardName = MICRO;
   Keypad keypad = Keypad( NULL, 0, 0, 0, 0 );
   SoftwareSerial mySerial(8,9);

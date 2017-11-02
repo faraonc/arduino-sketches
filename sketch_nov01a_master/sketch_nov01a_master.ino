@@ -6,7 +6,7 @@ const char *SSID     = "Starxf";
 const char *PASSWORD = "Carsomyr";
 
 SoftwareSerial ESPserial(52,53); //ESP's RX = 53 & ESP's TX = 52
-ESP8266 wifi(ESPserial);
+//ESP8266 wifi(ESPserial);
 
 void setup()
 {
@@ -19,15 +19,15 @@ void setup()
   {
     ;
   }
-
-  Serial.println("Begin Serial!\n");
-
-  if (!wifi.init(SSID, PASSWORD))
-  {
-    Serial.println("Wifi Init failed. Check configuration.");
-    while (true) ; // loop eternally
-  }
-  Serial.println("WI-FI Connected!\n");
+//
+//  Serial.println("Begin Serial!\n");
+//
+//  if (!wifi.init(SSID, PASSWORD))
+//  {
+//    Serial.println("Wifi Init failed. Check configuration.");
+//    while (true) ; // loop eternally
+//  }
+//  Serial.println("WI-FI Connected!\n");
   
 }
 

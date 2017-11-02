@@ -1,5 +1,6 @@
 #include <SoftwareSerial.h>
-#define TIMEOUT 5000 // mS
+#define TIMEOUT 5000 // ms
+
 SoftwareSerial mySerial(52, 53); // RX, TX
 
 void setup()
@@ -16,14 +17,11 @@ void setup()
 }
 
 void loop() {
-
-  String IncomingString = "";
-  boolean StringReady = false;
   if (Serial.available())
   {
     Serial.readString();
-    mySerial.println("AT+CIPSEND=0,19");
-    mySerial.println("Button was pressed!");
+    SendCommand("AT+CIPSEND=0,9", ">");
+    mySerial.print("<h1>Hello</h1>");
     delay(2000);
     SendCommand("AT+CIPCLOSE=0", "OK");
   }

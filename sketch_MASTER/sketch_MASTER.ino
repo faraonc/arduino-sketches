@@ -1,14 +1,21 @@
 #include <SoftwareSerial.h>
 #include <WiFiEsp.h>
+#include <LiquidCrystal.h>
 
-const char *SSID     = "Starxf";
-const char *PASSWORD = "Carsomyr";
+const char *SSID     = "Conard James's iPhone";
+const char *PASSWORD = "12345678";
 const byte HTTP_PORT = 80;
 const byte ESP_RX = 53;
 const byte ESP_TX = 52;
 const byte TEST_LED = 13;
+const int RS = 12, EN = 11, D4 = 5, D5 = 4, D6 = 3, D7 = 2;
+const int BUZZER = 9;
 
 int status = WL_IDLE_STATUS;
+unsigned int ACK_SLAVE = 0;
+unsigned int SYN = 0;
+ 
+LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
 
 //ESP's RX = 53 & ESP's TX = 52
 SoftwareSerial ESPserial(ESP_TX, ESP_RX);
@@ -19,6 +26,14 @@ RingBuffer buf(8);
 
 void setup()
 {
+
+  // set up the LCD's number of columns and rows:
+  lcd.begin(16, 2);
+  // Print a message to the LCD.
+  lcd.print("hello, world!");
+  // Set buzzer - pin 9 as an output
+  pinMode(BUZZER, OUTPUT);
+
   // Start the software serial for communication with the ESP8266
   ESPserial.begin(9600);
 
@@ -29,36 +44,35 @@ void setup()
     ;
   }
 
-  // initialize ESP module
-  WiFi.init(&ESPserial);    
-  
-  // check for the presence of the shield
-  if (WiFi.status() == WL_NO_SHIELD)
-  {
-    Serial.println("WiFi shield not present");
-    // don't continue
-    while (true);
-  }
-
-  Serial.println("WiFi shield exists. Connecting...");
-
-  // attempt to connect to WiFi network
-  while (status != WL_CONNECTED)
-  {
-    Serial.print("Attempting to connect to WPA SSID: ");
-    Serial.println(SSID);
-    // Connect to WPA/WPA2 network
-    status = WiFi.begin(SSID, PASSWORD);
-  }
-
-  Serial.println("You're connected to the network");
-  printWifiStatus();
-
-  // start the web server on port 80
-  server.begin();
-
-  client = NULL;
-
+//  // initialize ESP module
+//  WiFi.init(&ESPserial);
+//
+//  // check for the presence of the shield
+//  if (WiFi.status() == WL_NO_SHIELD)
+//  {
+//    Serial.println("WiFi shield not present");
+//    // don't continue
+//    while (true);
+//  }
+//
+//  Serial.println("WiFi shield exists. Connecting...");
+//
+//  // attempt to connect to WiFi network
+//  while (status != WL_CONNECTED)
+//  {
+//    Serial.print("Attempting to connect to WPA SSID: ");
+//    Serial.println(SSID);
+//    // Connect to WPA/WPA2 network
+//    status = WiFi.begin(SSID, PASSWORD);
+//  }
+//
+//  Serial.println("You're connected to the network");
+//  printWifiStatus();
+//
+//  // start the web server on port 80
+//  server.begin();
+//
+//  client = NULL;
 
   /*DEBUGGING PURPOSE ONLY*/
   pinMode(TEST_LED, OUTPUT);
@@ -68,28 +82,42 @@ void setup()
 
 void loop()
 {
-  client = server.available();  // listen for incoming clients
-
-  // if you get a client,
-  if (client)
-  {
-    Serial.println("New client");
-    serviceClient();
-    // close the connection
-    client.stop();
-    Serial.println("Client disconnected");
-  }
-
   updateLCD();
+  buzz();
+
+//  client = server.available();  // listen for incoming clients
+//
+//  // if you get a client,
+//  if (client)
+//  {
+//    Serial.println("New client");
+//    serviceClient();
+//    // close the connection
+//    client.stop();
+//    Serial.println("Client disconnected");
+//  }
 }
 
 
 /*TO-DO*/
 void updateLCD()
 {
-  int TODO = true;
+  // set the cursor to column 0, line 1
+  // (note: line 1 is the second row, since counting begins with 0):
+  lcd.setCursor(0, 1);
+  // print the number of seconds since reset:
+  lcd.print(millis() / 1000);
 }
 
+void buzz()
+{
+  // Send 1KHz sound signal...
+  tone(BUZZER, 1000); 
+  delay(1000);
+  noTone(BUZZER);
+  delay(1000);
+
+}
 
 void serviceClient()
 {

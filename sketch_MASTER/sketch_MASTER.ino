@@ -6,6 +6,7 @@ const char *PASSWORD = "Carsomyr";
 const byte HTTP_PORT = 80;
 const byte ESP_RX = 53;
 const byte ESP_TX = 52;
+const byte TEST_LED = 13;
 
 int status = WL_IDLE_STATUS;
 
@@ -28,6 +29,9 @@ void setup()
     ;
   }
 
+  // initialize ESP module
+  WiFi.init(&ESPserial);    
+  
   // check for the presence of the shield
   if (WiFi.status() == WL_NO_SHIELD)
   {
@@ -35,6 +39,8 @@ void setup()
     // don't continue
     while (true);
   }
+
+  Serial.println("WiFi shield exists. Connecting...");
 
   // attempt to connect to WiFi network
   while (status != WL_CONNECTED)
@@ -53,9 +59,9 @@ void setup()
 
   client = NULL;
 
-  
+
   /*DEBUGGING PURPOSE ONLY*/
-  pinMode(LED_BUILTIN, OUTPUT);
+  pinMode(TEST_LED, OUTPUT);
   /*DEBUGGING PURPOSE ONLY*/
 
 }
@@ -73,7 +79,17 @@ void loop()
     client.stop();
     Serial.println("Client disconnected");
   }
+
+  updateLCD();
 }
+
+
+/*TO-DO*/
+void updateLCD()
+{
+  int TODO = true;
+}
+
 
 void serviceClient()
 {
@@ -105,13 +121,13 @@ void serviceClient()
       // Check to see if the client request was "GET /H" or "GET /L":
       if (buf.endsWith("GET /H"))
       {
-        Serial.println("Turn led ON");
-        digitalWrite(LED_BUILTIN, HIGH);   // turn the LED on (HIGH is the voltage level)
+        Serial.println("Turn led ON!!!!!!!!!!!!!!!");
+        digitalWrite(TEST_LED, HIGH);   // turn the LED on (HIGH is the voltage level)
       }
       else if (buf.endsWith("GET /L"))
       {
-        Serial.println("Turn led OFF");
-        digitalWrite(LED_BUILTIN, LOW);    // turn the LED off by making the voltage LOW
+        Serial.println("Turn led OFF!!!!!!!!!!!!!!!");
+        digitalWrite(TEST_LED, LOW);    // turn the LED off by making the voltage LOW
       }
       /*DEBUGGING PURPOSE ONLY*/
     }

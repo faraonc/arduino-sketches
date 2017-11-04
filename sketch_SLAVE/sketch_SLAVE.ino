@@ -1,64 +1,277 @@
 /*
-  LiquidCrystal Library - Hello World
-
- Demonstrates the use a 16x2 LCD display.  The LiquidCrystal
- library works with all LCD displays that are compatible with the
- Hitachi HD44780 driver. There are many of them out there, and you
- can usually tell them by the 16-pin interface.
-
- This sketch prints "Hello World!" to the LCD
- and shows the time.
-
-  The circuit:
- * LCD RS pin to digital pin 12
- * LCD Enable pin to digital pin 11
- * LCD D4 pin to digital pin 5
- * LCD D5 pin to digital pin 4
- * LCD D6 pin to digital pin 3
- * LCD D7 pin to digital pin 2
- * LCD R/W pin to ground
- * LCD VSS pin to ground
- * LCD VCC pin to 5V
- * 10K resistor:
- * ends to +5V and ground
- * wiper to LCD VO pin (pin 3)
-
- Library originally added 18 Apr 2008
- by David A. Mellis
- library modified 5 Jul 2009
- by Limor Fried (http://www.ladyada.net)
- example added 9 Jul 2009
- by Tom Igoe
- modified 22 Nov 2010
- by Tom Igoe
- modified 7 Nov 2016
- by Arturo Guadalupi
-
- This example code is in the public domain.
-
- http://www.arduino.cc/en/Tutorial/LiquidCrystalHelloWorld
+   SLAVE Arduino
+   @Authors Pouria Ghadimi
+            Conard James Faraon
 
 */
 
-// include the library code:
+// include libraries
 #include <LiquidCrystal.h>
+#include<DHT.h>
 
-// initialize the library by associating any needed LCD interface pin
-// with the arduino pin number it is connected to
+
+#define DHTPIN 6     // what digital pin we're connected to
+#define DHTTYPE DHT11   // DHT 11
+
+
+/*--------------------------------------------------------------
+ * CONST
+ *--------------------------------------------------------------
+ */
+//initialize pins
 const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
-LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+const int BUTTON_PIN = 7;
 
+//button
+const unsigned long DEBOUNCE_DELAY = 50;
+
+
+/*--------------------------------------------------------------
+ * Unsigned
+ *--------------------------------------------------------------
+ */
+// Communications
+unsigned int SYN = 0;
+unsigned int ACK_MASTER = 0;
+unsigned int incomingByte = 0; 
+
+//button
+unsigned long previousMillisLED;        // will store last time LED was updated
+unsigned long previousMillisKey;        // will store last time a key was pressed
+unsigned long lastDebounceTime = 0;  // the last time the output pin was toggle
+
+/*--------------------------------------------------------------
+ * INTS
+ *--------------------------------------------------------------
+ */
+//PIR
+int PIRPin = 22;               // choose the input pin (for PIR sensor)
+int pirState = LOW;             // we start, assuming no motion detected
+int val = 0;                    // variable for reading the pin status
+
+//Button 
+int buttonState = LOW;
+int lastButtonState = LOW;
+
+/*--------------------------------------------------------------
+ * FLOATS
+ *--------------------------------------------------------------
+ */
+//DHT
+float TEMPERATURE, HUMIDITY, FAHRENHEIT;
+
+
+/*--------------------------------------------------------------
+ * BOOLEANS
+ *--------------------------------------------------------------
+ */
+//PIR
+bool motionDetected = false;
+
+//button
+bool isButtonPressed = false;
+
+
+//Initializing needed components
+LiquidCrystal lcd(rs, en, d4, d5, d6, d7);
+DHT dht(DHTPIN, DHTTYPE);
+
+
+
+
+
+/*--------------------------------------------------------------
+ *Button
+ *when pushed do a handshake and buzz on MASTER side
+ *--------------------------------------------------------------
+ */
+
+void resetInput()
+{
+  previousMillisKey = 0;
+}
+
+void buttonPressed()
+{
+
+  // read the state of the pushbutton value:
+  int reading = digitalRead(BUTTON_PIN);
+  //Serial.println(reading);
+
+  if (reading != lastButtonState)
+  {
+    // reset the debouncing timer
+    lastDebounceTime = millis();
+
+  }
+
+  if ((millis() - lastDebounceTime) > DEBOUNCE_DELAY)
+  {
+    //Serial.println(reading);
+
+    if (reading != buttonState)
+    {
+      buttonState = reading;
+
+      if (buttonState == HIGH)
+      {
+        isButtonPressed = true;
+        //Serial.println("XXXX");
+        sendSYN();
+      }
+    }
+  }
+
+  // save the reading. Next time through the loop, it'll be the lastButtonState:
+  lastButtonState = reading;
+
+}
+
+/*
+   A function to collect and show the data form
+   DHT11 - Temperature and Humidity sensor
+*/
+void showTempAndHumid() {
+  //delay(2000);
+
+  // Reading temperature or humidity takes about 250 milliseconds!
+  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+  HUMIDITY = dht.readHumidity();
+  // Read temperature as Celsius (the default)
+  TEMPERATURE = dht.readTemperature();
+  // Read temperature as Fahrenheit (isFahrenheit = true)
+  FAHRENHEIT = dht.readTemperature(true);
+
+  // Check if any reads failed and exit early (to try again).
+  if (isnan(HUMIDITY) || isnan(TEMPERATURE) || isnan(FAHRENHEIT)) {
+    Serial.println("Failed to read from DHT sensor!");
+    return;
+  }
+
+  // Compute heat index in Fahrenheit (the default)
+  float hif = dht.computeHeatIndex(FAHRENHEIT, HUMIDITY);
+  // Compute heat index in Celsius (isFahreheit = false)
+  float hic = dht.computeHeatIndex(TEMPERATURE, HUMIDITY, false);
+
+}
+
+/*
+ * Motion Sensor PIR
+ * Sends an 'M' to MASTER when detects motion
+ */
+void PIR(){
+  
+  val = digitalRead(PIRPin);  // read input value
+  if (val == HIGH ) {            // check if the input is HIGH
+    if (pirState == LOW) {
+      // we have just turned on
+      // We only want to print on the output change, not state
+      pirState = HIGH;
+      motionDetected = true;
+      sendSYN();
+    }
+  } else {
+    if (pirState == HIGH){
+      // we have just turned of
+      // We only want to print on the output change, not state
+      pirState = LOW;
+      motionDetected = false;
+    }
+  }
+}
+
+
+
+/*
+   SENDING SYN
+   a function to send SYN to MASTER
+*/
+void sendSYN() {
+  Serial.write(++SYN);
+}
+
+
+/*
+   CheckMSG
+   a funvtion to receive an acknowlegment from MASTER
+*/
+void CheckMSG() {
+  if (Serial.available() > 0)
+  {
+    if ( SYN == (unsigned int) incomingByte)
+    {
+      if (isButtonPressed)
+      {
+        Serial.write('B');
+        Serial.write('S');
+        isButtonPressed = false;
+      }
+      else if (motionDetected)
+      {
+        Serial.write('M');
+        Serial.write('S');
+        
+      }
+    }
+    else {
+      --SYN;
+    }
+  }
+}
+
+/*
+   Setup
+*/
 void setup() {
+
+  //testing if button turns BULTIN_LED on
+  digitalWrite(LED_BUILTIN, LOW);
+
+  pinMode(BUTTON_PIN, INPUT);
+  pinMode(LED_BUILTIN, OUTPUT);
+
+  //Serial just to Test if receive any data
+  Serial.begin(9600);
+
   // set up the LCD's number of columns and rows:
   lcd.begin(16, 2);
-  // Print a message to the LCD.
-  lcd.print("hello, world!");
+
+
+  dht.begin();
 }
 
+
+/*
+   Main Loop
+*/
 void loop() {
-  // set the cursor to column 0, line 1
+
+
+
+  buttonPressed();
+
   // (note: line 1 is the second row, since counting begins with 0):
-  lcd.setCursor(0, 1);
-  // print the number of seconds since reset:
-  lcd.print(millis() / 1000);
+  showTempAndHumid();
+  PIR();
+
+  if (motionDetected){
+    // set the cursor to column 0, line 0
+    lcd.setCursor(0, 0);
+    lcd.print ("Welcome");
+  
+    // set the cursor to column 0, line 1
+    lcd.setCursor(0, 1);
+    lcd.print("Buzz for answer");
+
+    if (isButtonPressed){
+      lcd.setCursor(0, 1);
+      lcd.print("DING DONG :D !!");
+    }
+  }
+
+  
+
+  CheckMSG();
+
 }
+

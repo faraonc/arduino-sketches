@@ -18,6 +18,7 @@ const int MIN_RANGE_INCH = 0;
 
 volatile long echoStart;
 volatile long echoEnd;
+volatile bool isUSSReady;
 volatile QueueList<long> duration;
 /*******************************/
 /*******************************/
@@ -87,12 +88,17 @@ void ISR_echo()
     case LOW:
       echoEnd = micros(); // Save the end time
       duration.push(echoEnd - echoStart); // Calculate the pulse duration
+      isUSSReady = true;
       break;
   }
 
-  Task t;
-  t.function = ultraSonicTask;
-  task_queue.push(t);
+  if (isUSSReady)
+  {
+    Task t;
+    t.function = ultraSonicTask;
+    task_queue.push(t);
+    isUSSReady = false;
+  }
   interrupts();
 }
 
@@ -210,7 +216,7 @@ void setup()
   /* ULTRASONIC variables */
   echoStart = 0;
   echoEnd = 0;
-
+  isUSSReady = false;
   pinMode(SS_TRIG_PIN, OUTPUT);
   pinMode(SS_ECHO_PIN, INPUT);
   attachInterrupt(digitalPinToInterrupt(SS_ECHO_PIN), ISR_echo, CHANGE);

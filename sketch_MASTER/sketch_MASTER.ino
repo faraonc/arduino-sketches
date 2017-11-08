@@ -3,15 +3,33 @@
 #include <LiquidCrystal.h>
 #include <Keypad.h>
 
-const char *SSID     = "Conard James's iPhone";
+/**------------------ WIFI Variables ------------------**/
+const char *SSID     = "Free-Wifi";
 const char *PASSWORD = "12345678";
 const byte HTTP_PORT = 80;
 const byte ESP_RX = 53;
 const byte ESP_TX = 52;
-const byte MOTION_LED = 13;
-const int RS = 12, EN = 11, D4 = 5, D5 = 4, D6 = 3, D7 = 2;
-const int BUZZER = 9;
 const byte MSG_BUFFER = 10;
+const int CONNECT_DELAY = 2000;
+
+//ESP's RX = 53 & ESP's TX = 52
+SoftwareSerial ESPserial(ESP_TX, ESP_RX);
+WiFiEspServer server(HTTP_PORT);
+WiFiEspClient client;
+
+// use a ring buffer to increase speed and reduce memory allocation
+RingBuffer buf(8);
+int status = WL_IDLE_STATUS;
+unsigned int ack_slave = 0;
+unsigned int syn = 0;
+bool is_handshake_completed = false;
+byte incoming_byte;
+char msg[MSG_BUFFER];
+byte msg_size = 0;
+/*******************************************************************************/
+/*******************************************************************************/
+
+/**------------------ Keypad Variables ------------------**/
 const byte ROWS = 4; //four rows
 const byte COLS = 3; //three columns
 char keys[ROWS][COLS] = {
@@ -20,199 +38,149 @@ char keys[ROWS][COLS] = {
   {'7', '8', '9'},
   {'*', '0', '#'}
 };
-byte rowPins[ROWS] = {25, 24, 23, 22}; //connect to the row pinouts of the keypad
-byte colPins[COLS] = {28, 27, 26}; //connect to the column pinouts of the keypad
 
+//connect to the row pinouts of the keypad
+byte rowPins[ROWS] = {25, 24, 23, 22};
+
+//connect to the column pinouts of the keypad
+byte colPins[COLS] = {28, 27, 26};
 Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS);
+/*******************************************************************************/
+/*******************************************************************************/
+
+/**------------------ LCD Variables ------------------**/
+const int RS = 12, EN = 11, D4 = 5, D5 = 4, D6 = 3, D7 = 2;
+const byte LED_COL = 20;
 LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
-//ESP's RX = 53 & ESP's TX = 52
-SoftwareSerial ESPserial(ESP_TX, ESP_RX);
-WiFiEspServer server(HTTP_PORT);
-WiFiEspClient client;
-// use a ring buffer to increase speed and reduce memory allocation
-RingBuffer buf(8);
+/*******************************************************************************/
+/*******************************************************************************/
 
-int status = WL_IDLE_STATUS;
-unsigned int ack_slave = 0;
-unsigned int syn = 0;
-bool xmit = false;
-bool isHandshakeCompleted = false;
-byte incomingByte;
-char msg[MSG_BUFFER];
-byte msg_size = 0;
+/**------------------ LED Variables ------------------**/
+const byte MOTION_LED = 13;
 
-void setup()
+/**------------------ Buzzer Variables ------------------**/
+const int BUZZER = 9;
+const int BUZZER_TONE1 = 1200;
+const int BUZZER_TONE2 = 1000;
+const int BUZZER_DELAY = 250;
+/*******************************************************************************/
+/*******************************************************************************/
+
+void clearLCDRow(byte row)
 {
+  lcd.setCursor(0, row);
+  for (byte i = 0; i < LED_COL; i++)
+  {
+    lcd.print(" ");
+  }
+}
 
+void lcdBoot()
+{
   // set up the LCD's number of columns and rows:
-  lcd.begin(16, 2);
+  lcd.begin(20, 4);
   // Print a message to the LCD.
-  lcd.print("hello, world!");
+  lcd.print("Smart Doorbell");
+}
+
+void buzzerBoot()
+{
   // Set buzzer - pin 9 as an output
   pinMode(BUZZER, OUTPUT);
+}
+
+void ledBoot()
+{
   pinMode(MOTION_LED, OUTPUT);
+}
 
-  // Start the software serial for communication with the ESP8266
-  ESPserial.begin(9600);
-
-  // communication with the host computer
+void xbeeBoot()
+{
   Serial.begin(9600);
   while (!Serial)
   {
     ;
   }
-
-  //  // initialize ESP module
-  //  WiFi.init(&ESPserial);
-  //
-  //  // check for the presence of the shield
-  //  if (WiFi.status() == WL_NO_SHIELD)
-  //  {
-  //    Serial.println("WiFi shield not present");
-  //    // don't continue
-  //    while (true);
-  //  }
-  //
-  //  Serial.println("WiFi shield exists. Connecting...");
-  //
-  //  // attempt to connect to WiFi network
-  //  while (status != WL_CONNECTED)
-  //  {
-  //    Serial.print("Attempting to connect to WPA SSID: ");
-  //    Serial.println(SSID);
-  //    // Connect to WPA/WPA2 network
-  //    status = WiFi.begin(SSID, PASSWORD);
-  //  }
-  //
-  //  Serial.println("You're connected to the network");
-  //  printWifiStatus();
-  //
-  //  // start the web server on port 80
-  //  server.begin();
-  //
-  //  client = NULL;
-
-  /*DEBUGGING PURPOSE ONLY*/
-//  pinMode(TEST_LED, OUTPUT);
-  /*DEBUGGING PURPOSE ONLY*/
-
 }
 
-void loop()
+void printWifiStatus()
 {
-  checkMsg();
-  updateLCD();
-  checkKeypad();
+  // print the SSID of the network you're attached to
+  // Serial.print("SSID: ");
+  // Serial.println(WiFi.SSID());
 
-  //  client = server.available();  // listen for incoming clients
-  //
-  //  // if you get a client,
-  //  if (client)
-  //  {
-  //    Serial.println("New client");
-  //    serviceClient();
-  //    // close the connection
-  //    client.stop();
-  //    Serial.println("Client disconnected");
-  //  }
-}
-
-void checkMsg()
-{
-  // see if there's incoming serial data:
-  if (Serial.available() > 0)
-  {
-    incomingByte = Serial.read();
-    if (!isHandshakeCompleted)
-    {
-      ack_slave = (unsigned int)incomingByte;
-      sendAck();
-      isHandshakeCompleted = true;
-    }
-    else
-    {
-      char c = (char)incomingByte;
-      if (c == 'S')
-      {
-        decodeMsg();
-      }
-      else
-      {
-        msg[msg_size] = c;
-        msg_size++;
-        //        Serial.println(msg);
-      }
-    }
-
-  }
-}
-
-void sendAck()
-{
-  Serial.write(ack_slave);
-}
-
-void decodeMsg()
-{
-  //  Serial.println(msg_size);
-  for (byte i = 0; i < msg_size; i++)
-  {
-    //    Serial.println("HERE");
-    //    Serial.print(msg[i]);
-    switch (msg[i])
-    {
-      case 'B':
-        buzz();
-        break;
-        
-      case 'M':
-        detectedMotion();
-        break;
-    }
-  }
-  memset(msg, 0, sizeof(msg));
-  msg_size = 0;
-  isHandshakeCompleted = false;
-}
-
-void updateLCD()
-{
-  // set the cursor to column 0, line 1
-  // (note: line 1 is the second row, since counting begins with 0):
+  // print your WiFi shield's IP address
+  IPAddress ip = WiFi.localIP();
+  clearLCDRow(1);
   lcd.setCursor(0, 1);
-  // print the number of seconds since reset:
-  lcd.print(millis() / 1000);
+  lcd.print("IP: ");
+  lcd.print(ip);
 }
 
-void buzz()
+void espBoot()
 {
-  tone(BUZZER, 1100);
-  delay(500);
-  noTone(BUZZER);
-  delay(500);
-  tone(BUZZER, 1000);
-  delay(500);
-  noTone(BUZZER);
-  delay(500);
-}
+  lcd.setCursor(0, 1);
+  lcd.print("Initializing WIFI");
+  // Start the software serial for communication with the ESP8266
+  ESPserial.begin(9600);
 
-void detectedMotion()
-{
-  digitalWrite(MOTION_LED, HIGH);
-}
+  // initialize ESP module
+  WiFi.init(&ESPserial);
 
-void checkKeypad()
-{
-  char key = keypad.getKey();
-
-  if (key != NO_KEY)
+  // check for the presence of the shield
+  if (WiFi.status() == WL_NO_SHIELD)
   {
-    switch(key)
-    {
-      case '1':
-        digitalWrite(MOTION_LED, LOW);
-    }
+    clearLCDRow(1);
+    lcd.setCursor(0, 1);
+    lcd.print("No WiFi shield!");
+    // don't continue
+    // while (true);
   }
+
+  // attempt to connect to WiFi network
+  if (status != WL_CONNECTED)
+  {
+    clearLCDRow(1);
+    lcd.setCursor(0, 1);
+    lcd.print("Connect: "  );
+    lcd.print(SSID);
+    // Connect to WPA/WPA2 network
+    status = WiFi.begin(SSID, PASSWORD);
+    delay(CONNECT_DELAY);
+  }
+
+  if (status == WL_CONNECTED)
+  {
+    printWifiStatus();// start the web server on port 80
+    server.begin();
+    client = NULL;
+  }
+  else if (status != WL_CONNECTED)
+  {
+    clearLCDRow(1);
+    lcd.setCursor(0, 1);
+    lcd.print("WIFI Disconnected");
+  }
+}
+
+void sendHttpResponse()
+{
+  // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
+  // and a content-type so the client knows what's coming, then a blank line:
+  client.println("HTTP/1.1 200 OK");
+  client.println("Content-type:text/html");
+  client.println();
+
+  // the content of the HTTP response follows the header:
+  client.print("The LED is responding");
+  client.println("<br>");
+  client.println("<br>");
+
+  client.println("Click <a href=\"/H\">here</a> turn the LED on<br>");
+  client.println("Click <a href=\"/L\">here</a> turn the LED off<br>");
+
+  // The HTTP response ends with another blank line:
+  client.println();
 }
 
 void serviceClient()
@@ -245,12 +213,10 @@ void serviceClient()
       // Check to see if the client request was "GET /H" or "GET /L":
       if (buf.endsWith("GET /H"))
       {
-        Serial.println("Turn led ON!!!!!!!!!!!!!!!");
         digitalWrite(MOTION_LED, HIGH);   // turn the LED on (HIGH is the voltage level)
       }
       else if (buf.endsWith("GET /L"))
       {
-        Serial.println("Turn led OFF!!!!!!!!!!!!!!!");
         digitalWrite(MOTION_LED, LOW);    // turn the LED off by making the voltage LOW
       }
       /*DEBUGGING PURPOSE ONLY*/
@@ -258,40 +224,133 @@ void serviceClient()
   }
 }
 
-void sendHttpResponse()
+void listenClient()
 {
-  // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
-  // and a content-type so the client knows what's coming, then a blank line:
-  client.println("HTTP/1.1 200 OK");
-  client.println("Content-type:text/html");
-  client.println();
-
-  // the content of the HTTP response follows the header:
-  client.print("The LED is responding");
-  client.println("<br>");
-  client.println("<br>");
-
-  client.println("Click <a href=\"/H\">here</a> turn the LED on<br>");
-  client.println("Click <a href=\"/L\">here</a> turn the LED off<br>");
-
-  // The HTTP response ends with another blank line:
-  client.println();
+  if (status == WL_CONNECTED)
+  {
+    client = server.available();  // listen for incoming clients
+    // if you get a client,
+    if (client)
+    {
+      serviceClient();
+      // close the connection
+      client.stop();
+    }
+  }
 }
 
-void printWifiStatus()
+void checkMsg()
 {
-  // print the SSID of the network you're attached to
-  Serial.print("SSID: ");
-  Serial.println(WiFi.SSID());
-
-  // print your WiFi shield's IP address
-  IPAddress ip = WiFi.localIP();
-  Serial.print("IP Address: ");
-  Serial.println(ip);
-
-  // print where to go in the browser
-  Serial.println();
-  Serial.print("To see this page in action, open a browser to http://");
-  Serial.println(ip);
-  Serial.println();
+  // see if there's incoming serial data:
+  if (Serial.available() > 0)
+  {
+    incoming_byte = Serial.read();
+    if (!is_handshake_completed)
+    {
+      ack_slave = (unsigned int)incoming_byte;
+      sendAck();
+      is_handshake_completed = true;
+    }
+    else
+    {
+      char c = (char)incoming_byte;
+      if (c == 'S')
+      {
+        decodeMsg();
+      }
+      else
+      {
+        msg[msg_size] = c;
+        msg_size++;
+        //        Serial.println(msg);
+      }
+    }
+  }
 }
+
+void sendAck()
+{
+  Serial.write(ack_slave);
+}
+
+void decodeMsg()
+{
+  //  Serial.println(msg_size);
+  for (byte i = 0; i < msg_size; i++)
+  {
+    //    Serial.println("HERE");
+    //    Serial.print(msg[i]);
+    switch (msg[i])
+    {
+      case 'B':
+        buzz();
+        break;
+
+      case 'M':
+        detectedMotion();
+        break;
+    }
+  }
+  memset(msg, 0, sizeof(msg));
+  msg_size = 0;
+  is_handshake_completed = false;
+}
+
+void buzz()
+{
+  tone(BUZZER, BUZZER_TONE1);
+  delay(BUZZER_DELAY);
+  noTone(BUZZER);
+  delay(BUZZER_DELAY);
+  
+  tone(BUZZER, BUZZER_TONE2);
+  delay(BUZZER_DELAY);
+  noTone(BUZZER);
+  delay(BUZZER_DELAY);
+
+  tone(BUZZER, BUZZER_TONE1);
+  delay(BUZZER_DELAY);
+  noTone(BUZZER);
+  delay(BUZZER_DELAY);
+  
+  tone(BUZZER, BUZZER_TONE2);
+  delay(BUZZER_DELAY);
+  noTone(BUZZER);
+  delay(BUZZER_DELAY);
+}
+
+void detectedMotion()
+{
+  digitalWrite(MOTION_LED, HIGH);
+}
+
+void checkKeypad()
+{
+  char key = keypad.getKey();
+
+  if (key != NO_KEY)
+  {
+    switch (key)
+    {
+      case '*':
+        digitalWrite(MOTION_LED, LOW);
+    }
+  }
+}
+
+void setup()
+{
+  lcdBoot();
+  buzzerBoot();
+  xbeeBoot();
+  espBoot();
+}
+
+void loop()
+{
+  checkMsg();
+  checkKeypad();
+  listenClient();
+}
+
+

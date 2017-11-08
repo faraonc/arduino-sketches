@@ -258,11 +258,8 @@ void sendAck()
 
 void decodeMsg()
 {
-  //  Serial.println(msg_size);
   for (byte i = 0; i < msg_size; i++)
   {
-    //    Serial.println("HERE");
-    //    Serial.print(msg[i]);
     switch (msg[i])
     {
       case 'B':

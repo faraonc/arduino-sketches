@@ -9,7 +9,7 @@ const char *PASSWORD = "12345678";
 const byte HTTP_PORT = 80;
 const byte ESP_RX = 53;
 const byte ESP_TX = 52;
-const byte MSG_BUFFER = 10;
+const byte MSG_BUFFER = 128;
 const int CONNECT_DELAY = 2000;
 
 //ESP's RX = 53 & ESP's TX = 52
@@ -23,20 +23,9 @@ int status = WL_IDLE_STATUS;
 unsigned int ack_slave = 0;
 unsigned int syn = 0;
 bool is_handshake_completed = false;
-bool is_syn_sent = false;
 byte incoming_byte;
 char msg[MSG_BUFFER];
 byte msg_size = 0;
-
-enum
-{
-  LAZY,
-  ENGLISH,
-  SPANISH,
-  ACK_GUESS
-};
-
-byte syn_state = LAZY;
 
 /*******************************************************************************/
 /*******************************************************************************/
@@ -315,65 +304,14 @@ void checkKeypad()
       case '*':
         digitalWrite(MOTION_LED, LOW);
         break;
-
-      case '1':
-        syn_state = ENGLISH;
-        break;
-
-      case '2':
-        syn_state = SPANISH;
-        break;
-
-      case '3':
-        syn_state = ACK_GUESS;
-        break;
     }
-  }
-}
-
-void sendMsg()
-{
-  if (syn_state != LAZY && !is_syn_sent)
-  {
-    Serial.write(++syn);
-    is_syn_sent = true;
-
-  }
-  else if (syn_state != LAZY && is_syn_sent && (Serial.available() > 0))
-  {
-    if ( syn == (unsigned int) incoming_byte)
-    {
-      switch (syn_state)
-      {
-        case ENGLISH:
-          Serial.write('E');
-          Serial.write('S');
-          break;
-
-        case SPANISH:
-          Serial.write('P');
-          Serial.write('S');
-          break;
-
-        case ACK_GUESS:
-          Serial.write('A');
-          Serial.write('S');
-          break;
-      }
-    }
-    else
-    {
-      --syn;
-    }
-    is_syn_sent = false;
-    syn_state = LAZY;
   }
 }
 
 void checkMsg()
 {
   // see if there's incoming serial data:
-  if (syn_state == LAZY && Serial.available() > 0)
+  if (Serial.available() > 0)
   {
     incoming_byte = Serial.read();
     if (!is_handshake_completed)
@@ -401,6 +339,7 @@ void checkMsg()
 void setup()
 {
   lcdBoot();
+  ledBoot();
   buzzerBoot();
   xbeeBoot();
   espBoot();
@@ -411,7 +350,6 @@ void loop()
   checkMsg();
   checkKeypad();
   listenClient();
-  sendMsg();
 }
 
 

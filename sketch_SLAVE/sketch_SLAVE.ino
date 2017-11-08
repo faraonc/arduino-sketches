@@ -52,6 +52,7 @@ bool isMotionDetected = false;
 const int RS = 12, EN = 11, D4 = 5, D5 = 4, D6 = 3, D7 = 2;
 const byte LED_COL = 16;
 char lang = 'E';
+bool isOn = false;
 unsigned long lcdAckTimer = 0;
 unsigned int ACK_DELAY = 4000;
 LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
@@ -82,7 +83,7 @@ void updateLCD()
       lcd.setCursor(0, 1);
       lcd.print("Sonar la campana");
       break;
-      
+
   }
 }
 
@@ -130,6 +131,7 @@ void checkButton()
 
       if (buttonState == HIGH)
       {
+        //Serial.println("You Pressed the button");
         isButtonPressed = true;
         syn_state = ACTIVE_BUTTON;
       }
@@ -225,13 +227,17 @@ void sendMsg()
         Serial.write('S');
         isMotionDetected = false;
       }
+
+      is_syn_sent = false;
+      syn_state = LAZY;
     }
     else
     {
       --SYN;
+      is_syn_sent = false;
+      syn_state = LAZY;
     }
-    is_syn_sent = false;
-    syn_state = LAZY;
+
   }
 }
 
@@ -258,9 +264,10 @@ void decodeMsg()
 
       case 'A':
         clearLCDRow(1);
-        lcd.setCursor(0,1);
+        lcd.setCursor(0, 1);
         lcd.print("Guest Ack");
         lcdAckTimer = millis();
+        isOn = true;
         break;
     }
   }
@@ -299,9 +306,10 @@ void checkMsg()
 
 void resetGuessAck()
 {
-  if((millis()- lcdAckTimer) >= ACK_DELAY)
+  if (isOn && (millis() - lcdAckTimer) >= ACK_DELAY)
   {
     updateLCD();
+    isOn = false;
   }
 }
 
@@ -322,11 +330,11 @@ void setup()
 */
 void loop()
 {
-  checkMsg();
+//  checkMsg();
   checkButton();
   readTempAndHumid();
   readPIR();
   sendMsg();
-  resetGuessAck();
-}
+//  resetGuessAck();
 
+}

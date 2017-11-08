@@ -15,9 +15,9 @@
 
 
 /*--------------------------------------------------------------
- * CONST
- *--------------------------------------------------------------
- */
+   CONST
+  --------------------------------------------------------------
+*/
 //initialize pins
 const int rs = 12, en = 11, d4 = 5, d5 = 4, d6 = 3, d7 = 2;
 const int BUTTON_PIN = 7;
@@ -27,13 +27,13 @@ const unsigned long DEBOUNCE_DELAY = 50;
 
 
 /*--------------------------------------------------------------
- * Unsigned
- *--------------------------------------------------------------
- */
+   Unsigned
+  --------------------------------------------------------------
+*/
 // Communications
 unsigned int SYN = 0;
 unsigned int ACK_MASTER = 0;
-unsigned int incomingByte = 0; 
+unsigned int incomingByte = 0;
 
 //button
 unsigned long previousMillisLED;        // will store last time LED was updated
@@ -41,30 +41,30 @@ unsigned long previousMillisKey;        // will store last time a key was presse
 unsigned long lastDebounceTime = 0;  // the last time the output pin was toggle
 
 /*--------------------------------------------------------------
- * INTS
- *--------------------------------------------------------------
- */
+   INTS
+  --------------------------------------------------------------
+*/
 //PIR
 int PIRPin = 22;               // choose the input pin (for PIR sensor)
 int pirState = LOW;             // we start, assuming no motion detected
 int val = 0;                    // variable for reading the pin status
 
-//Button 
+//Button
 int buttonState = LOW;
 int lastButtonState = LOW;
 
 /*--------------------------------------------------------------
- * FLOATS
- *--------------------------------------------------------------
- */
+   FLOATS
+  --------------------------------------------------------------
+*/
 //DHT
 float TEMPERATURE, HUMIDITY, FAHRENHEIT;
 
 
 /*--------------------------------------------------------------
- * BOOLEANS
- *--------------------------------------------------------------
- */
+   BOOLEANS
+  --------------------------------------------------------------
+*/
 //PIR
 bool motionDetected = false;
 
@@ -81,10 +81,10 @@ DHT dht(DHTPIN, DHTTYPE);
 
 
 /*--------------------------------------------------------------
- *Button
- *when pushed do a handshake and buzz on MASTER side
- *--------------------------------------------------------------
- */
+  Button
+  when pushed do a handshake and buzz on MASTER side
+  --------------------------------------------------------------
+*/
 
 void resetInput()
 {
@@ -156,11 +156,11 @@ void showTempAndHumid() {
 }
 
 /*
- * Motion Sensor PIR
- * Sends an 'M' to MASTER when detects motion
- */
-void PIR(){
-  
+   Motion Sensor PIR
+   Sends an 'M' to MASTER when detects motion
+*/
+void PIR() {
+
   val = digitalRead(PIRPin);  // read input value
   if (val == HIGH ) {            // check if the input is HIGH
     if (pirState == LOW) {
@@ -171,7 +171,7 @@ void PIR(){
       sendSYN();
     }
   } else {
-    if (pirState == HIGH){
+    if (pirState == HIGH) {
       // we have just turned of
       // We only want to print on the output change, not state
       pirState = LOW;
@@ -195,7 +195,7 @@ void sendSYN() {
    CheckMSG
    a funvtion to receive an acknowlegment from MASTER
 */
-void CheckMSG() {
+void checkMSG() {
   if (Serial.available() > 0)
   {
     if ( SYN == (unsigned int) incomingByte)
@@ -210,7 +210,7 @@ void CheckMSG() {
       {
         Serial.write('M');
         Serial.write('S');
-        
+
       }
     }
     else {
@@ -254,24 +254,24 @@ void loop() {
   showTempAndHumid();
   PIR();
 
-  if (motionDetected){
+  if (motionDetected) {
     // set the cursor to column 0, line 0
     lcd.setCursor(0, 0);
     lcd.print ("Welcome");
-  
+
     // set the cursor to column 0, line 1
     lcd.setCursor(0, 1);
     lcd.print("Buzz for answer");
 
-    if (isButtonPressed){
+    if (isButtonPressed) {
       lcd.setCursor(0, 1);
       lcd.print("DING DONG :D !!");
     }
   }
 
-  
 
-  CheckMSG();
+
+  checkMSG();
 
 }
 

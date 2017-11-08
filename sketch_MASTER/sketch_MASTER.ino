@@ -23,9 +23,21 @@ int status = WL_IDLE_STATUS;
 unsigned int ack_slave = 0;
 unsigned int syn = 0;
 bool is_handshake_completed = false;
+bool is_syn_sent = false;
 byte incoming_byte;
 char msg[MSG_BUFFER];
 byte msg_size = 0;
+
+enum
+{
+  LAZY,
+  ENGLISH,
+  SPANISH,
+  ACK_GUESS
+};
+
+byte syn_state = LAZY;
+
 /*******************************************************************************/
 /*******************************************************************************/
 
@@ -239,35 +251,6 @@ void listenClient()
   }
 }
 
-void checkMsg()
-{
-  // see if there's incoming serial data:
-  if (Serial.available() > 0)
-  {
-    incoming_byte = Serial.read();
-    if (!is_handshake_completed)
-    {
-      ack_slave = (unsigned int)incoming_byte;
-      sendAck();
-      is_handshake_completed = true;
-    }
-    else
-    {
-      char c = (char)incoming_byte;
-      if (c == 'S')
-      {
-        decodeMsg();
-      }
-      else
-      {
-        msg[msg_size] = c;
-        msg_size++;
-        //        Serial.println(msg);
-      }
-    }
-  }
-}
-
 void sendAck()
 {
   Serial.write(ack_slave);
@@ -302,7 +285,7 @@ void buzz()
   delay(BUZZER_DELAY);
   noTone(BUZZER);
   delay(BUZZER_DELAY);
-  
+
   tone(BUZZER, BUZZER_TONE2);
   delay(BUZZER_DELAY);
   noTone(BUZZER);
@@ -312,7 +295,7 @@ void buzz()
   delay(BUZZER_DELAY);
   noTone(BUZZER);
   delay(BUZZER_DELAY);
-  
+
   tone(BUZZER, BUZZER_TONE2);
   delay(BUZZER_DELAY);
   noTone(BUZZER);
@@ -334,6 +317,86 @@ void checkKeypad()
     {
       case '*':
         digitalWrite(MOTION_LED, LOW);
+        break;
+
+      case '1':
+        syn_state = ENGLISH;
+        break;
+
+      case '2':
+        syn_state = SPANISH;
+        break;
+
+      case '3':
+        syn_state = ACK_GUESS;
+        break;
+    }
+  }
+}
+
+void sendMsg()
+{
+  if (syn_state != LAZY && !is_syn_sent)
+  {
+    Serial.write(++syn);
+    is_syn_sent = true;
+
+  }
+  else if (syn_state != LAZY && is_syn_sent && (Serial.available() > 0))
+  {
+    if ( syn == (unsigned int) incoming_byte)
+    {
+      switch (syn_state)
+      {
+        case ENGLISH:
+          Serial.write('E');
+          Serial.write('S');
+          break;
+
+        case SPANISH:
+          Serial.write('P');
+          Serial.write('S');
+          break;
+
+        case ACK_GUESS:
+          Serial.write('A');
+          Serial.write('S');
+          break;
+      }
+    }
+    else
+    {
+      --syn;
+    }
+    is_syn_sent = false;
+    syn_state = LAZY;
+  }
+}
+
+void checkMsg()
+{
+  // see if there's incoming serial data:
+  if (syn_state == LAZY && Serial.available() > 0)
+  {
+    incoming_byte = Serial.read();
+    if (!is_handshake_completed)
+    {
+      ack_slave = (unsigned int)incoming_byte;
+      sendAck();
+      is_handshake_completed = true;
+    }
+    else
+    {
+      char c = (char)incoming_byte;
+      if (c == 'S')
+      {
+        decodeMsg();
+      }
+      else
+      {
+        msg[msg_size] = c;
+        msg_size++;
+      }
     }
   }
 }
@@ -351,6 +414,7 @@ void loop()
   checkMsg();
   checkKeypad();
   listenClient();
+  sendMsg();
 }
 
 

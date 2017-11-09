@@ -148,11 +148,11 @@ void checkButton()
 
       if (buttonState == HIGH)
       {
-        //Serial.println("You Pressed the button");
         isButtonPressed = true;
         sendSyn();
         syn_state = ACTIVE_BUTTON;
         dingDong();
+        Serial.println("You Pressed the button");
       }
     }
   }

@@ -4,13 +4,13 @@
 #include <Keypad.h>
 
 /**------------------ WIFI Variables ------------------**/
-const char *SSID     = "Free-Wifi";
+const char *SSID     = "Test-Wifi";
 const char *PASSWORD = "12345678";
 const byte HTTP_PORT = 80;
 const byte ESP_RX = 53;
 const byte ESP_TX = 52;
 const byte MSG_BUFFER = 128;
-const int CONNECT_DELAY = 2000;
+const int WIFI_CONNECT_DELAY = 2000;
 
 //ESP's RX = 53 & ESP's TX = 52
 SoftwareSerial ESPserial(ESP_TX, ESP_RX);
@@ -20,16 +20,20 @@ WiFiEspClient client;
 // use a ring buffer to increase speed and reduce memory allocation
 RingBuffer buf(8);
 int status = WL_IDLE_STATUS;
+
 unsigned int ack_slave = 0;
 unsigned int syn = 0;
+
 bool is_handshake_completed = false;
 bool is_syn_sent = false;
+
 byte incoming_byte;
 char msg[MSG_BUFFER];
 byte msg_size = 0;
 bool is_msg_buffer_used = false;
 unsigned long msg_buffer_timer = 0;
 const int MSG_BUFFER_TIMEOUT = 2000;
+
 enum
 {
   LAZY,
@@ -37,7 +41,6 @@ enum
   SPANISH,
   GUEST_ACK
 };
-
 byte syn_state = LAZY;
 /*******************************************************************************/
 /*******************************************************************************/
@@ -93,7 +96,7 @@ void lcdBoot()
   // set up the LCD's number of columns and rows:
   lcd.begin(20, 4);
   // Print a message to the LCD.
-  lcd.print("Smart Doorbell");
+  lcd.print("   Smart Doorbell   ");
 }
 
 void buzzerBoot()
@@ -159,7 +162,7 @@ void espBoot()
     lcd.print(SSID);
     // Connect to WPA/WPA2 network
     status = WiFi.begin(SSID, PASSWORD);
-    delay(CONNECT_DELAY);
+    delay(WIFI_CONNECT_DELAY);
   }
 
   if (status == WL_CONNECTED)
@@ -391,7 +394,7 @@ void sendMsg()
   if (syn_state != LAZY && (Serial.available() > 0))
   {
     incoming_byte = Serial.read();
-    
+
     if (((char)incoming_byte) == 'K')
     {
 
@@ -416,7 +419,7 @@ void sendMsg()
       syn++;
       is_syn_sent = false;
       syn_state = LAZY;
-    }  
+    }
   }
 }
 
@@ -432,10 +435,9 @@ void setup()
 void loop()
 {
   checkMsg();
+  //clear message buffer to prevent collision and weird behavior
   checkMsgBuffer();
   checkKeypad();
   listenClient();
   sendMsg();
 }
-
-

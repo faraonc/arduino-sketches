@@ -252,35 +252,6 @@ void listenClient()
   }
 }
 
-void clearMsgBuffer()
-{
-  is_msg_buffer_used = false;
-  memset(msg, 0, sizeof(msg));
-  msg_size = 0;
-  is_handshake_completed = false;
-  is_syn_sent = false;
-  syn_state = LAZY;
-}
-
-void decodeMsg()
-{
-  for (byte i = 0; i < msg_size; i++)
-  {
-    switch (msg[i])
-    {
-      case 'B':
-        buzz();
-        break;
-
-      case 'M':
-        detectedMotion();
-        break;
-    }
-  }
-
-  clearMsgBuffer();
-}
-
 void buzz()
 {
   tone(BUZZER, BUZZER_TONE1);
@@ -339,11 +310,46 @@ void checkKeypad()
   }
 }
 
+void clearMsgBuffer()
+{
+  is_msg_buffer_used = false;
+  memset(msg, 0, sizeof(msg));
+  msg_size = 0;
+  is_handshake_completed = false;
+  is_syn_sent = false;
+  syn_state = LAZY;
+}
+
+void checkMsgBuffer()
+{
+  if (is_msg_buffer_used && (millis() - msg_buffer_timer) >= MSG_BUFFER_TIMEOUT)
+  {
+    clearMsgBuffer();
+  }
+}
+
+void decodeMsg()
+{
+  for (byte i = 0; i < msg_size; i++)
+  {
+    switch (msg[i])
+    {
+      case 'B':
+        buzz();
+        break;
+
+      case 'M':
+        detectedMotion();
+        break;
+    }
+  }
+  clearMsgBuffer();
+}
+
 void sendAck()
 {
   Serial.write('K');
 }
-
 
 void sendSyn()
 {
@@ -411,14 +417,6 @@ void sendMsg()
       is_syn_sent = false;
       syn_state = LAZY;
     }  
-  }
-}
-
-void checkMsgBuffer()
-{
-  if (is_msg_buffer_used && (millis() - msg_buffer_timer) >= MSG_BUFFER_TIMEOUT)
-  {
-    clearMsgBuffer();
   }
 }
 

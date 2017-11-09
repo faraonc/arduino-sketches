@@ -223,6 +223,14 @@ void clearMsgBuffer()
   syn_state = LAZY;
 }
 
+void checkMsgBuffer()
+{
+  if (is_msg_buffer_used && (millis() - msg_buffer_timer) >= MSG_BUFFER_TIMEOUT)
+  {
+    clearMsgBuffer();
+  }
+}
+
 void decodeMsg()
 {
   for (byte i = 0; i < msg_size; i++)
@@ -242,14 +250,23 @@ void decodeMsg()
       case 'A':
         clearLCDRow(1);
         lcd.setCursor(0, 1);
-        lcd.print("Guest Ack!");
+        lcd.print("Hey! Guest Ack!");
         lcdAckTimer = millis();
         isAcked = true;
         break;
     }
   }
-
   clearMsgBuffer();
+}
+
+void sendAck()
+{
+  Serial.write('K');
+}
+
+void sendSYN()
+{
+  Serial.write('O');
 }
 
 void checkMsg()
@@ -268,7 +285,6 @@ void checkMsg()
     }
     else
     {
-
       char c = (char)incomingByte;
       if (c == 'S')
       {
@@ -281,16 +297,6 @@ void checkMsg()
       }
     }
   }
-}
-
-void sendAck()
-{
-  Serial.write('K');
-}
-
-void sendSYN()
-{
-  Serial.write('O');
 }
 
 /*
@@ -322,14 +328,6 @@ void sendMsg()
       is_syn_sent = false;
       syn_state = LAZY;
     }
-  }
-}
-
-void checkMsgBuffer()
-{
-  if (is_msg_buffer_used && (millis() - msg_buffer_timer) >= MSG_BUFFER_TIMEOUT)
-  {
-    clearMsgBuffer();
   }
 }
 

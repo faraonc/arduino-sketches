@@ -92,7 +92,6 @@ void updateLCD()
       lcd.setCursor(0, 1);
       lcd.print("Sonar la campana");
       break;
-
   }
 }
 
@@ -121,6 +120,15 @@ void sensorsBoot()
   dht.begin();
 }
 
+void dingDong()
+{
+  clearLCDRow(1);
+  lcd.setCursor(0, 1);
+  lcd.print("Ding! Dong!");
+  lcdBuzzTimer = millis();
+  isBuzzed = true;
+}
+
 void checkButton()
 {
   // read the state of the pushbutton value:
@@ -142,14 +150,9 @@ void checkButton()
       {
         //Serial.println("You Pressed the button");
         isButtonPressed = true;
-
         sendSyn();
         syn_state = ACTIVE_BUTTON;
-        clearLCDRow(1);
-        lcd.setCursor(0, 1);
-        lcd.print("Ding! Dong!");
-        lcdBuzzTimer = millis();
-        isBuzzed = true;
+        dingDong();
       }
     }
   }

@@ -23,10 +23,22 @@ int status = WL_IDLE_STATUS;
 unsigned int ack_slave = 0;
 unsigned int syn = 0;
 bool is_handshake_completed = false;
+bool is_syn_sent = false;
 byte incoming_byte;
 char msg[MSG_BUFFER];
 byte msg_size = 0;
+bool is_msg_buffer_used = false;
+unsigned long msg_buffer_timer = 0;
+const int MSG_BUFFER_TIMEOUT = 2000;
+enum
+{
+  LAZY,
+  ENGLISH,
+  SPANISH,
+  GUEST_ACK
+};
 
+byte syn_state = LAZY;
 /*******************************************************************************/
 /*******************************************************************************/
 
@@ -240,9 +252,14 @@ void listenClient()
   }
 }
 
-void sendAck()
+void clearMsgBuffer()
 {
-  Serial.write(ack_slave);
+  is_msg_buffer_used = false;
+  memset(msg, 0, sizeof(msg));
+  msg_size = 0;
+  is_handshake_completed = false;
+  is_syn_sent = false;
+  syn_state = LAZY;
 }
 
 void decodeMsg()
@@ -260,9 +277,8 @@ void decodeMsg()
         break;
     }
   }
-  memset(msg, 0, sizeof(msg));
-  msg_size = 0;
-  is_handshake_completed = false;
+
+  clearMsgBuffer();
 }
 
 void buzz()
@@ -304,21 +320,49 @@ void checkKeypad()
       case '*':
         digitalWrite(MOTION_LED, LOW);
         break;
+
+      case '1':
+        syn_state = ENGLISH;
+        sendSyn();
+        break;
+
+      case '2':
+        syn_state = SPANISH;
+        sendSyn();
+        break;
+
+      case '3':
+        syn_state = GUEST_ACK;
+        sendSyn();
+        break;
     }
   }
+}
+
+void sendAck()
+{
+  Serial.write('K');
+}
+
+
+void sendSyn()
+{
+  Serial.write('O');
 }
 
 void checkMsg()
 {
   // see if there's incoming serial data:
-  if (Serial.available() > 0)
+  if (syn_state == LAZY && (Serial.available() > 0))
   {
     incoming_byte = Serial.read();
     if (!is_handshake_completed)
     {
-      ack_slave = (unsigned int)incoming_byte;
       sendAck();
+      ack_slave++;
       is_handshake_completed = true;
+      msg_buffer_timer = millis();
+      is_msg_buffer_used = true;
     }
     else
     {
@@ -336,6 +380,48 @@ void checkMsg()
   }
 }
 
+void sendMsg()
+{
+  if (syn_state != LAZY && (Serial.available() > 0))
+  {
+    incoming_byte = Serial.read();
+    
+    if (((char)incoming_byte) == 'K')
+    {
+
+      switch (syn_state)
+      {
+        case ENGLISH:
+
+          Serial.write('E');
+          Serial.write('S');
+          break;
+
+        case SPANISH:
+          Serial.write('P');
+          Serial.write('S');
+          break;
+
+        case GUEST_ACK:
+          Serial.write('A');
+          Serial.write('S');
+          break;
+      }
+      syn++;
+      is_syn_sent = false;
+      syn_state = LAZY;
+    }  
+  }
+}
+
+void checkMsgBuffer()
+{
+  if (is_msg_buffer_used && (millis() - msg_buffer_timer) >= MSG_BUFFER_TIMEOUT)
+  {
+    clearMsgBuffer();
+  }
+}
+
 void setup()
 {
   lcdBoot();
@@ -348,8 +434,10 @@ void setup()
 void loop()
 {
   checkMsg();
+  checkMsgBuffer();
   checkKeypad();
   listenClient();
+  sendMsg();
 }
 
 

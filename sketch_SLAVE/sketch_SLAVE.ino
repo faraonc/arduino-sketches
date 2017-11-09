@@ -28,15 +28,20 @@ enum
   ACTIVE_MOTION
 };
 
-const byte MSG_BUFFER = 10;
 byte syn_state = LAZY;
-bool is_syn_sent = false;
+const byte MSG_BUFFER = 128;
 bool is_handshake_completed = false;
 unsigned int SYN = 0;
 unsigned int ACK_MASTER = 0;
 unsigned int incomingByte = 0;
 char msg[MSG_BUFFER];
 byte msg_size = 0;
+bool is_msg_buffer_used = false;
+bool is_syn_sent = false;
+unsigned long msg_buffer_timer = 0;
+const int MSG_BUFFER_TIMEOUT = 2000;
+char synArray[MSG_BUFFER];
+byte synArray_size;
 /*******************************************************************************/
 /*******************************************************************************/
 
@@ -52,9 +57,11 @@ bool isMotionDetected = false;
 const int RS = 12, EN = 11, D4 = 5, D5 = 4, D6 = 3, D7 = 2;
 const byte LED_COL = 16;
 char lang = 'E';
-bool isOn = false;
 unsigned long lcdAckTimer = 0;
-unsigned int ACK_DELAY = 4000;
+bool isAcked = false;
+unsigned long lcdBuzzTimer = 0;
+bool isBuzzed = false;
+const unsigned int LCD_UPDATE_DELAY = 5000;
 LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
 /*******************************************************************************/
 /*******************************************************************************/
@@ -133,7 +140,14 @@ void checkButton()
       {
         //Serial.println("You Pressed the button");
         isButtonPressed = true;
+
+        sendSYN();
         syn_state = ACTIVE_BUTTON;
+        clearLCDRow(1);
+        lcd.setCursor(0, 1);
+        lcd.print("Ding! Dong!");
+        lcdBuzzTimer = millis();
+        isBuzzed = true;
       }
     }
   }
@@ -156,6 +170,7 @@ void readPIR() {
       // We only want to print on the output change, not state
       pirState = HIGH;
       isMotionDetected = true;
+      sendSYN();
       syn_state = ACTIVE_MOTION;
     }
   }
@@ -163,14 +178,13 @@ void readPIR() {
   {
     if (pirState == HIGH)
     {
-      // we have just turned of
+      // we have just turned ofF
       // We only want to print on the output change, not state
       pirState = LOW;
       isMotionDetected = false;
     }
   }
 }
-
 
 /*
    A function to collect and show the data form
@@ -197,53 +211,16 @@ void readTempAndHumid()
 
   // Compute heat index in Fahrenheit (the default)
   hif = dht.computeHeatIndex(fahrenheit, humidity);
-
 }
 
-/*
-   sendMSG
-   a funvtion to receive an acknowlegment from MASTER
-*/
-void sendMsg()
+void clearMsgBuffer()
 {
-  if (syn_state != LAZY && !is_syn_sent)
-  {
-    Serial.write(++SYN);
-    is_syn_sent = true;
-  }
-  else if (syn_state != LAZY && is_syn_sent && (Serial.available() > 0))
-  {
-    if ( SYN == (unsigned int) incomingByte)
-    {
-      if (isButtonPressed)
-      {
-        Serial.write('B');
-        Serial.write('S');
-        isButtonPressed = false;
-      }
-      else if (isMotionDetected)
-      {
-        Serial.write('M');
-        Serial.write('S');
-        isMotionDetected = false;
-      }
-
-      is_syn_sent = false;
-      syn_state = LAZY;
-    }
-    else
-    {
-      --SYN;
-      is_syn_sent = false;
-      syn_state = LAZY;
-    }
-
-  }
-}
-
-void sendAck()
-{
-  Serial.write(ACK_MASTER);
+  is_msg_buffer_used = false;
+  memset(msg, 0, sizeof(msg));
+  msg_size = 0;
+  is_handshake_completed = false;
+  is_syn_sent = false;
+  syn_state = LAZY;
 }
 
 void decodeMsg()
@@ -265,31 +242,33 @@ void decodeMsg()
       case 'A':
         clearLCDRow(1);
         lcd.setCursor(0, 1);
-        lcd.print("Guest Ack");
+        lcd.print("Guest Ack!");
         lcdAckTimer = millis();
-        isOn = true;
+        isAcked = true;
         break;
     }
   }
-  memset(msg, 0, sizeof(msg));
-  msg_size = 0;
-  is_handshake_completed = false;
+
+  clearMsgBuffer();
 }
 
 void checkMsg()
 {
   // see if there's incoming serial data:
-  if (syn_state == LAZY && Serial.available() > 0)
+  if (syn_state == LAZY && (Serial.available() > 0))
   {
     incomingByte = Serial.read();
     if (!is_handshake_completed)
     {
-      ACK_MASTER = (unsigned int)incomingByte;
       sendAck();
+      ACK_MASTER++;
       is_handshake_completed = true;
+      msg_buffer_timer = millis();
+      is_msg_buffer_used = true;
     }
     else
     {
+
       char c = (char)incomingByte;
       if (c == 'S')
       {
@@ -304,12 +283,73 @@ void checkMsg()
   }
 }
 
-void resetGuessAck()
+void sendAck()
 {
-  if (isOn && (millis() - lcdAckTimer) >= ACK_DELAY)
+  Serial.write('K');
+}
+
+void sendSYN()
+{
+  Serial.write('O');
+}
+
+/*
+   sendMSG
+   a funvtion to receive an acknowlegment from MASTER
+*/
+void sendMsg()
+{
+  if (syn_state != LAZY && (Serial.available() > 0))
   {
-    updateLCD();
-    isOn = false;
+    incomingByte = Serial.read();
+
+    if (((char)incomingByte) == 'K')
+    {
+      if (isButtonPressed)
+      {
+        Serial.write('B');
+        Serial.write('S');
+        isButtonPressed = false;
+      }
+
+      else if (isMotionDetected)
+      {
+        Serial.write('M');
+        Serial.write('S');
+        isMotionDetected = false;
+      }
+      SYN++;
+      is_syn_sent = false;
+      syn_state = LAZY;
+    }
+  }
+}
+
+void checkMsgBuffer()
+{
+  if (is_msg_buffer_used && (millis() - msg_buffer_timer) >= MSG_BUFFER_TIMEOUT)
+  {
+    clearMsgBuffer();
+  }
+}
+
+void resetLCD()
+{
+  if (isBuzzed)
+  {
+    if ((millis() - lcdBuzzTimer) >= LCD_UPDATE_DELAY)
+    {
+      updateLCD();
+      isBuzzed = false;
+    }
+  }
+  else if (isAcked)
+  {
+    if ((millis() - lcdAckTimer) >= LCD_UPDATE_DELAY)
+    {
+      updateLCD();
+      isAcked = false;
+    }
   }
 }
 
@@ -324,17 +364,17 @@ void setup()
   sensorsBoot();
 }
 
-
 /*
    Main Loop
 */
 void loop()
 {
-//  checkMsg();
+  checkMsg();
+  checkMsgBuffer();
   checkButton();
   readTempAndHumid();
   readPIR();
   sendMsg();
-//  resetGuessAck();
+  resetLCD();
 
 }

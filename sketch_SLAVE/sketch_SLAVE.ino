@@ -5,7 +5,10 @@
 /**------------------ DHT Variables ------------------**/
 #define DHTPIN 6
 #define DHTTYPE DHT11
-float temperature, humidity, fahrenheit, hif;
+bool DHTinit = false;
+unsigned long DHTtimer = 0;
+const int DHT_DELAY = 2000;
+float humidity, fahrenheit, hif;
 DHT dht(DHTPIN, DHTTYPE);
 /*******************************************************************************/
 /*******************************************************************************/
@@ -22,11 +25,37 @@ bool isButtonPressed = false;
 
 /**------------------ PIR Variables ------------------**/
 const byte PIR_PIN = 22;
-const unsigned long DEBOUNCE_PIR_DELAY = 1000;
+const unsigned long DEBOUNCE_PIR_DELAY = 500;
 unsigned long lastPIRDebounceTime = 0;  // the last time the output pin was toggle
 int pirState = LOW;
 int lastPIRState = LOW;
 bool isMotionDetected = false;
+/*******************************************************************************/
+/*******************************************************************************/
+
+/**------------------ Photocell Variables ------------------**/
+const int PHOTOR_PIN = A7;
+unsigned int lightLevel = 0 ;
+bool photorInit = false;
+unsigned long photorTimer = 0;
+const int PHOTOR_DELAY = 2000;
+
+/*******************************************************************************/
+/*******************************************************************************/
+
+/**------------------ Air Sensor Variables ------------------**/
+const int MQ7_pin=A9;
+bool airSensInit = false
+int value = 0;
+float CO_
+/**------
+
+
+/******************************************************************************/------- MQ3 Variables ------------------**/ppm_value = 0
+/**------------------ MQ3 Variables ------------------**/
+const int MQ3_pin=A8;
+int value = 0;
+float ppm_value = 0;
 /*******************************************************************************/
 /*******************************************************************************/
 
@@ -66,6 +95,9 @@ bool is_msg_buffer_used = false;
 unsigned long msg_buffer_timer = 0;
 /*******************************************************************************/
 /*******************************************************************************/
+
+
+
 
 void clearLCDRow(byte row)
 {
@@ -118,6 +150,16 @@ void buttonBoot()
 void sensorsBoot()
 {
   dht.begin();
+}
+
+void photocellBoot()
+{
+  pinMode(PHOTOR_PIN, INPUT);
+}
+
+void MQ7Boot()
+{
+  pinMode(ledPin, OUTPUT);
 }
 
 void dingDong()
@@ -189,7 +231,7 @@ void readPIR()
           isMotionDetected = true;
           sendSyn();
           syn_state = ACTIVE_MOTION;
-          Serial.println("Motion Detected! Try again in 1sec!");
+          //Serial.println("Motion Detected! Try again in  half a sec!");
         }
       }
       else
@@ -200,8 +242,8 @@ void readPIR()
         }
       }
     }
-    lastPIRState = reading;
   }
+  lastPIRState = reading;
 }
 
 /*
@@ -210,32 +252,94 @@ void readPIR()
 */
 void readTempAndHumid()
 {
-  //delay(2000);
-
-  // Reading temperature or humidity takes about 250 milliseconds!
-  // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
-  humidity = dht.readHumidity();
-  // Read temperature as Celsius (the default)
-  temperature = dht.readTemperature();
-  // Read temperature as Fahrenheit (isFahrenheit = true)
-  fahrenheit = dht.readTemperature(true);
-
-  // Check if any reads failed and exit early (to try again).
-  if (isnan(humidity) || isnan(temperature) || isnan(fahrenheit))
+  if (!DHTinit)
   {
-    //Serial.println("Failed to read from DHT sensor!");
-    return;
+    DHTinit = true;
+    DHTtimer = millis();
   }
+  if ((millis() - DHTtimer) > DHT_DELAY) //delay(2000);
+  {
+    // Reading temperature or humidity takes about 250 milliseconds!
+    // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
+    humidity = dht.readHumidity();
+    // Read temperature as Fahrenheit (isFahrenheit = true)
+    fahrenheit = dht.readTemperature(true);
 
-  // Compute heat index in Fahrenheit (the default)
-  hif = dht.computeHeatIndex(fahrenheit, humidity);
+    // Check if any reads failed and exit early (to try again).
+    if (isnan(humidity) || isnan(fahrenheit))
+    {
+      //Serial.println("Failed to read from DHT sensor!");
+      DHTinit = false;
+      return;
+    }
+
+    // Compute heat index in Fahrenheit (the default)
+    hif = dht.computeHeatIndex(fahrenheit, humidity);
+    //    Serial.print ("Fahrenheit :");
+    //    Serial.println (fahrenheit);
+    //    Serial.print ("Humidity :");
+    //    Serial.println (humidity);
+    //    Serial.print ("Heat Index Factor:");
+    //    Serial.println (hif);
+    DHTinit = false;
+  }
+}
+
+void readPhotocell()
+{
+  if (!photorInit)
+  {
+    photorInit = true;
+    photorTimer = millis();
+  }
+  if (millis() - photorTimer > PHOTOR_DELAY)
+  {
+    lightLevel = analogRead(PHOTOR_PIN);
+//    Serial.print("lightLevel: ");
+//    Serial.print(lightLevel);
+//    if (lightLevel < 10)
+//    {
+//      Serial.println(" - Dark");
+//    }
+//    else if (lightLevel < 200)
+//    {
+//      Serial.println(" - Dim");
+//    }
+//    else if (lightLevel < 500)
+//    {
+//      Serial.println(" - Light");
+//    }
+//    else if (lightLevel < 800)
+//    {
+//      Serial.println(" - Bright");
+//    }
+//    else
+//    {
+//      Serial.println(" - Very bright");
+//    }
+    photorInit = false;
+  }
+}
+
+void readMQ7()
+{
+  
 }
 
 void greetGuest()
 {
   clearLCDRow(1);
   lcd.setCursor(0, 1);
-  lcd.print("Hey! Guest Ack!");
+  switch (lang)
+  {
+    case 'E':
+      lcd.print("Hey! Guest Ack!");
+      break;
+    case 'B':
+      lcd.print("Hola visitante!");
+      break;
+  }
+
   lcdAckTimer = millis();
   isAcked = true;
 }
@@ -383,6 +487,7 @@ void setup()
   xbeeBoot();
   buttonBoot();
   sensorsBoot();
+  photocellBoot();
 }
 
 /*
@@ -396,6 +501,7 @@ void loop()
   checkButton();
   readTempAndHumid();
   readPIR();
+  readPhotocell();
   sendMsg();
   resetLCD();
 }

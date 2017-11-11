@@ -1,4 +1,3 @@
-#include <PIRMotion.h>
 #include <LiquidCrystal.h>
 #include<DHT.h>
 
@@ -25,8 +24,10 @@ bool isButtonPressed = false;
 
 /**------------------ PIR Variables ------------------**/
 const byte PIR_PIN = 22;
-PIRMotion pirM(PIR_PIN, 1);
-const byte DEBOUNCE_PIR_DELAY = 5; //secs
+const unsigned long DEBOUNCE_PIR_DELAY = 500;
+unsigned long lastPIRDebounceTime = 0;  // the last time the output pin was toggle
+int pirState = LOW;
+int lastPIRState = LOW;
 bool isMotionDetected = false;
 /*******************************************************************************/
 /*******************************************************************************/
@@ -203,12 +204,6 @@ void photocellBoot()
   pinMode(PHOTOR_PIN, INPUT);
 }
 
-void pirBoot()
-{
-  pirM.setMotionCallback(pirmCallback);
-  pirM.setLagAfterMotion(DEBOUNCE_PIR_DELAY);
-}
-
 
 void dingDong()
 {
@@ -250,16 +245,48 @@ void checkButton()
   lastButtonState = reading;
 }
 
-void pirmCallback()
-{
-  isMotionDetected = true;
-  sendSyn();
-  syn_state = ACTIVE_MOTION;
-}
-
+/*
+   Motion Sensor PIR
+   Sends an 'M' to MASTER when detects motion
+*/
 void readPIR()
 {
-  pirM.update();
+  // read the state of the pir value:
+  int reading = digitalRead(PIR_PIN);
+
+  if (reading != lastPIRState)
+  {
+    // reset the debouncing timer
+    lastPIRDebounceTime = millis();
+  }
+
+  if ((millis() - lastPIRDebounceTime) > DEBOUNCE_PIR_DELAY)
+  {
+    if (reading != pirState)
+    {
+      if (reading == HIGH)
+      {
+        if (pirState == LOW)
+        {
+          // we have just turned on
+          // We only want to print on the output change, not state
+          pirState = HIGH;
+          isMotionDetected = true;
+          sendSyn();
+          syn_state = ACTIVE_MOTION;
+          //          Serial.println("Motion Detected!");
+        }
+      }
+      else
+      {
+        if (pirState == HIGH)
+        {
+          pirState = LOW;
+        }
+      }
+    }
+  }
+  lastPIRState = reading;
 }
 
 /*
@@ -615,7 +642,6 @@ void setup()
   buttonBoot();
   sensorsBoot();
   photocellBoot();
-  pirBoot();
 }
 
 /*

@@ -135,6 +135,8 @@ void printWifiStatus()
 
 void espBoot()
 {
+  int status = WL_IDLE_STATUS;
+  clearLCDRow(1);
   lcd.setCursor(0, 1);
   lcd.print("Initializing WIFI");
   // Start the software serial for communication with the ESP8266

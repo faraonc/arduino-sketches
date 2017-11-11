@@ -724,11 +724,11 @@ void showData()
         break;
     }
 
-    Serial.print ("Fahrenheit :");
+    Serial.print ("Fahrenheit : ");
     Serial.println (fahrenheit);
-    Serial.print ("Humidity :");
+    Serial.print ("Humidity : ");
     Serial.println (humidity);
-    Serial.print ("Heat Index Factor:");
+    Serial.print ("Heat Index Factor: ");
     Serial.println (hif);
 
     Serial.print("LPG : ");

@@ -4,8 +4,8 @@
 #include <Keypad.h>
 
 /**------------------ WIFI Variables ------------------**/
-const char *SSID     = "Test-Wifi";
-const char *PASSWORD = "12345678";
+const char *SSID     = "Starxf";
+const char *PASSWORD = "Carsomyr";
 const byte HTTP_PORT = 80;
 const byte ESP_RX = 53;
 const byte ESP_TX = 52;
@@ -72,10 +72,10 @@ LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
 /*******************************************************************************/
 
 /**------------------ LED Variables ------------------**/
-const byte MOTION_LED = 13;
+const byte MOTION_LED = 30;
 
 /**------------------ Buzzer Variables ------------------**/
-const int BUZZER = 9;
+const int BUZZER = 29;
 const int BUZZER_TONE1 = 1200;
 const int BUZZER_TONE2 = 1000;
 const int BUZZER_DELAY = 250;
@@ -175,7 +175,7 @@ void espBoot()
   {
     clearLCDRow(1);
     lcd.setCursor(0, 1);
-    lcd.print("WIFI Disconnected");
+    lcd.print("WIFI OFF");
   }
 }
 
@@ -308,6 +308,10 @@ void checkKeypad()
       case '3':
         syn_state = GUEST_ACK;
         sendSyn();
+        break;
+
+      case '#':
+        espBoot();
         break;
     }
   }

@@ -1,9 +1,9 @@
-
+#include <PIRMotion.h>
 #include <LiquidCrystal.h>
 #include<DHT.h>
 
 /**------------------ DHT Variables ------------------**/
-#define DHTPIN 6
+#define DHTPIN 23
 #define DHTTYPE DHT11
 bool DHTinit = false;
 unsigned long DHTtimer = 0;
@@ -25,11 +25,26 @@ bool isButtonPressed = false;
 
 /**------------------ PIR Variables ------------------**/
 const byte PIR_PIN = 22;
-const unsigned long DEBOUNCE_PIR_DELAY = 500;
-unsigned long lastPIRDebounceTime = 0;  // the last time the output pin was toggle
-int pirState = LOW;
-int lastPIRState = LOW;
+PIRMotion pirM(PIR_PIN, 1);
+const byte DEBOUNCE_PIR_DELAY = 5; //secs
 bool isMotionDetected = false;
+/*******************************************************************************/
+/*******************************************************************************/
+
+/**------------------ Rain Sensor Variables ------------------**/
+const int RAINS_PIN = A8;
+unsigned int rainSReading = 0 ;
+bool rainSInit = false;
+unsigned long rainSTimer = 0;
+const int RAINS_DELAY = 2000;
+enum
+{
+  HEAVY_RAIN,
+  LIGHT_RAIN,
+  DRY
+};
+byte rainS_state = DRY;
+
 /*******************************************************************************/
 /*******************************************************************************/
 
@@ -39,23 +54,57 @@ unsigned int lightLevel = 0 ;
 bool photorInit = false;
 unsigned long photorTimer = 0;
 const int PHOTOR_DELAY = 2000;
+enum
+{
+  DARK,
+  DIM,
+  LIGHT,
+  BRIGHT,
+  VERY_BRIGHT
+};
+byte light_state = LIGHT;
 
 /*******************************************************************************/
 /*******************************************************************************/
 
 /**------------------ Air Sensor Variables ------------------**/
-const int MQ7_pin=A9;
-bool airSensInit = false
-int value = 0;
-float CO_
-/**------
 
+bool airSensInit = false;
+unsigned long airSensTimer = 0;
+const int AIRSENSOR_DELAY = 2000;
 
-/******************************************************************************/------- MQ3 Variables ------------------**/ppm_value = 0
+/**------------------ MQ7 Variables ------------------**/
+const int MQ7_pin = A9;
+int MQ7_reading = 0;
+float CO_value = 0;
+
 /**------------------ MQ3 Variables ------------------**/
-const int MQ3_pin=A8;
-int value = 0;
-float ppm_value = 0;
+const int MQ3_pin = A8;
+int MQ3_reading = 0;
+float alcohol_value = 0;
+
+/**------------------ MQ2 Variables ------------------**/
+const int MQ2_pin = A10;
+int MQ2_reading = 0;
+float smoke_value = 0;
+
+
+/**------------------ MQ135 Variables ------------------**/
+const int MQ135_pin = A11;
+int MQ135_reading = 0;
+float sulfide_value = 0;
+/*******************************************************************************/
+/*******************************************************************************/
+
+/**------------------ Calibration Variables ------------------**/
+bool isCalibrated = false;
+/*******************************************************************************/
+/*******************************************************************************/
+
+/**------------------ debugging Variables ------------------**/
+bool debugInit = false;
+unsigned long debugTimer = 0;
+const int DEBUG_DELAY = 3000;
 /*******************************************************************************/
 /*******************************************************************************/
 
@@ -95,9 +144,6 @@ bool is_msg_buffer_used = false;
 unsigned long msg_buffer_timer = 0;
 /*******************************************************************************/
 /*******************************************************************************/
-
-
-
 
 void clearLCDRow(byte row)
 {
@@ -157,10 +203,12 @@ void photocellBoot()
   pinMode(PHOTOR_PIN, INPUT);
 }
 
-void MQ7Boot()
+void pirBoot()
 {
-  pinMode(ledPin, OUTPUT);
+  pirM.setMotionCallback(pirmCallback);
+  pirM.setLagAfterMotion(DEBOUNCE_PIR_DELAY);
 }
+
 
 void dingDong()
 {
@@ -194,7 +242,7 @@ void checkButton()
         sendSyn();
         syn_state = ACTIVE_BUTTON;
         dingDong();
-        Serial.println("You Pressed the button");
+        //        Serial.println("You Pressed the button");
       }
     }
   }
@@ -202,48 +250,16 @@ void checkButton()
   lastButtonState = reading;
 }
 
-/*
-   Motion Sensor PIR
-   Sends an 'M' to MASTER when detects motion
-*/
+void pirmCallback()
+{
+  isMotionDetected = true;
+  sendSyn();
+  syn_state = ACTIVE_MOTION;
+}
+
 void readPIR()
 {
-  // read the state of the pir value:
-  int reading = digitalRead(PIR_PIN);
-
-  if (reading != lastPIRState)
-  {
-    // reset the debouncing timer
-    lastPIRDebounceTime = millis();
-  }
-
-  if ((millis() - lastPIRDebounceTime) > DEBOUNCE_PIR_DELAY)
-  {
-    if (reading != pirState)
-    {
-      if (reading == HIGH)
-      {
-        if (pirState == LOW)
-        {
-          // we have just turned on
-          // We only want to print on the output change, not state
-          pirState = HIGH;
-          isMotionDetected = true;
-          sendSyn();
-          syn_state = ACTIVE_MOTION;
-          //Serial.println("Motion Detected! Try again in  half a sec!");
-        }
-      }
-      else
-      {
-        if (pirState == HIGH)
-        {
-          pirState = LOW;
-        }
-      }
-    }
-  }
-  lastPIRState = reading;
+  pirM.update();
 }
 
 /*
@@ -257,7 +273,7 @@ void readTempAndHumid()
     DHTinit = true;
     DHTtimer = millis();
   }
-  if ((millis() - DHTtimer) > DHT_DELAY) //delay(2000);
+  else if ((millis() - DHTtimer) >= DHT_DELAY) //delay(2000);
   {
     // Reading temperature or humidity takes about 250 milliseconds!
     // Sensor readings may also be up to 2 seconds 'old' (its a very slow sensor)
@@ -275,12 +291,6 @@ void readTempAndHumid()
 
     // Compute heat index in Fahrenheit (the default)
     hif = dht.computeHeatIndex(fahrenheit, humidity);
-    //    Serial.print ("Fahrenheit :");
-    //    Serial.println (fahrenheit);
-    //    Serial.print ("Humidity :");
-    //    Serial.println (humidity);
-    //    Serial.print ("Heat Index Factor:");
-    //    Serial.println (hif);
     DHTinit = false;
   }
 }
@@ -292,38 +302,98 @@ void readPhotocell()
     photorInit = true;
     photorTimer = millis();
   }
-  if (millis() - photorTimer > PHOTOR_DELAY)
+  else if ((millis() - photorTimer) >= PHOTOR_DELAY)
   {
     lightLevel = analogRead(PHOTOR_PIN);
-//    Serial.print("lightLevel: ");
-//    Serial.print(lightLevel);
-//    if (lightLevel < 10)
-//    {
-//      Serial.println(" - Dark");
-//    }
-//    else if (lightLevel < 200)
-//    {
-//      Serial.println(" - Dim");
-//    }
-//    else if (lightLevel < 500)
-//    {
-//      Serial.println(" - Light");
-//    }
-//    else if (lightLevel < 800)
-//    {
-//      Serial.println(" - Bright");
-//    }
-//    else
-//    {
-//      Serial.println(" - Very bright");
-//    }
+    //    Serial.print("LightLevel: ");
+    //    Serial.print(lightLevel);
+    if (lightLevel < 10)
+    {
+      light_state = DARK;
+    }
+    else if (lightLevel < 200)
+    {
+      light_state = DIM;
+    }
+    else if (lightLevel < 500)
+    {
+      light_state = LIGHT;
+    }
+    else if (lightLevel < 800)
+    {
+      light_state = BRIGHT;
+    }
+    else
+    {
+      light_state = VERY_BRIGHT;
+    }
     photorInit = false;
   }
 }
 
-void readMQ7()
+void readRainSensor()
 {
-  
+  if (!rainSInit)
+  {
+    rainSInit = true;
+    rainSTimer = millis();
+  }
+  else if ((millis() - rainSTimer) >= RAINS_DELAY)
+  {
+    rainSReading = analogRead(RAINS_PIN);
+    int range = map(rainSReading, 0, 1023, 0, 3);
+    //    Serial.print("Rain Sensor Reading: ");
+    //    Serial.print(rainSReading);
+    // range value:
+    switch (range)
+    {
+      case 0:    // Sensor getting wet
+        rainS_state = HEAVY_RAIN;
+        break;
+      case 1:    // Sensor getting wet
+        rainS_state = LIGHT_RAIN;
+        break;
+      case 2:    // Sensor dry - To shut this up delete the " Serial.println("Not Raining"); " below.
+        rainS_state = DRY;
+        break;
+    }
+    rainSInit = false;
+  }
+}
+
+void readAirSensors()
+{
+  if (!airSensInit)
+  {
+    airSensInit = true;
+    airSensTimer = millis();
+  }
+  else if ( (millis() - airSensTimer) > AIRSENSOR_DELAY)
+  {
+
+    MQ7_reading = analogRead(MQ7_pin); //reads the analaog value from the CO sensor's AOUT pin
+    CO_value = (1000.0 / 1023) * MQ7_reading;
+    Serial.print("CO ppm: ");
+    Serial.println(CO_value);
+
+    MQ3_reading = analogRead(MQ3_pin);
+    alcohol_value = (4.0 / 1023) * MQ3_reading;
+    Serial.print("Alcohol mg/L: ");
+    Serial.println(alcohol_value);
+
+    MQ2_reading = analogRead(MQ2_pin);
+    smoke_value = (1000.0 / 1023) * MQ2_reading;
+    Serial.print("smoke ppm: ");
+    Serial.println(smoke_value);
+
+    MQ135_reading = analogRead(MQ135_pin);
+    sulfide_value = (1000.0 / 1023) * MQ135_reading;
+    Serial.print("sulfide ppm: ");
+    Serial.println(sulfide_value);
+
+    airSensInit = false;
+
+  }
 }
 
 void greetGuest()
@@ -335,7 +405,7 @@ void greetGuest()
     case 'E':
       lcd.print("Hey! Guest Ack!");
       break;
-    case 'B':
+    case 'P':
       lcd.print("Hola visitante!");
       break;
   }
@@ -478,6 +548,63 @@ void resetLCD()
   }
 }
 
+/* DEBUGG */
+void showData()
+{
+  if (!debugInit)
+  {
+    debugInit = true;
+    debugTimer = millis();
+  }
+  else if ( (millis() - debugTimer) > DEBUG_DELAY)
+  {
+    Serial.print ("Light :");
+    switch (light_state)
+    {
+      case DARK:
+        Serial.println (" DARK ");
+        break;
+      case DIM:
+        Serial.println (" DIM ");
+        break;
+      case LIGHT:
+        Serial.println (" LIGHT ");
+        break;
+      case BRIGHT:
+        Serial.println (" BRIGHT ");
+        break;
+      case VERY_BRIGHT:
+        Serial.println (" VERY BRIGHT ");
+        break;
+    }
+
+    Serial.print ("Rain :");
+    switch (rainS_state)
+    {
+      case HEAVY_RAIN:
+        Serial.println (" HEAVY RAIN ");
+        break;
+      case LIGHT_RAIN:
+        Serial.println (" LIGHT RAIN ");
+        break;
+      case DRY:
+        Serial.println (" DRY ");
+        break;
+    }
+
+    Serial.print ("Fahrenheit :");
+    Serial.println (fahrenheit);
+    Serial.print ("Humidity :");
+    Serial.println (humidity);
+    Serial.print ("Heat Index Factor:");
+    Serial.println (hif);
+    Serial.println("");
+
+    debugInit = false;
+  }
+
+}
+
 /*
    Setup
 */
@@ -488,6 +615,7 @@ void setup()
   buttonBoot();
   sensorsBoot();
   photocellBoot();
+  pirBoot();
 }
 
 /*
@@ -499,9 +627,23 @@ void loop()
   //clear message buffer to prevent collision and weird behavior
   checkMsgBuffer();
   checkButton();
-  readTempAndHumid();
-  readPIR();
   readPhotocell();
+  readRainSensor();
+  readTempAndHumid();
+  //  readAirSensors();
+  readPIR();
   sendMsg();
   resetLCD();
+
+  if (!isCalibrated)
+  {
+    isCalibrated = true;
+  }
+  //  else
+  //  {
+  //    showData();
+  //
+  //    //TO-DO
+  //    //Write a function to send data
+  //  }
 }

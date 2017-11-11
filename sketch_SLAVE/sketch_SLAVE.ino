@@ -1,3 +1,4 @@
+#include <MQ135.h>
 #include <LiquidCrystal.h>
 #include<DHT.h>
 
@@ -7,7 +8,7 @@
 bool DHTinit = false;
 unsigned long DHTtimer = 0;
 const int DHT_DELAY = 2000;
-float humidity, fahrenheit, hif;
+float temperature, humidity, fahrenheit, hif;
 DHT dht(DHTPIN, DHTTYPE);
 /*******************************************************************************/
 /*******************************************************************************/
@@ -74,36 +75,66 @@ bool airSensInit = false;
 unsigned long airSensTimer = 0;
 const int AIRSENSOR_DELAY = 2000;
 
-/**------------------ MQ7 Variables ------------------**/
-const int MQ7_pin = A9;
-int MQ7_reading = 0;
-float CO_value = 0;
-
-/**------------------ MQ3 Variables ------------------**/
-const int MQ3_pin = A8;
-int MQ3_reading = 0;
-float alcohol_value = 0;
-
 /**------------------ MQ2 Variables ------------------**/
-const int MQ2_pin = A10;
-int MQ2_reading = 0;
-float smoke_value = 0;
+const int MQ2_PIN = A9;
+unsigned int lpg = 0;
+unsigned int co = 0;
+unsigned int smoke = 0;
+
+//which is derived from the chart in datasheet
+#define         RL_VALUE                     (5)     //define the load resistance on the board, in kilo ohms
+#define         RO_CLEAN_AIR_FACTOR          (9.83)  //RO_CLEAR_AIR_FACTOR=(Sensor resistance in clean air)/RO,
+//cablibration phase
+#define         CALIBARAION_SAMPLE_TIMES     (50)    //define how many samples you are going to take in the calibration phase
+#define         CALIBRATION_SAMPLE_INTERVAL  (400)   //define the time interal(in milisecond) between each samples in the
+
+//normal operation
+#define         READ_SAMPLE_TIMES            (10)     //define the time interal(in milisecond) between each samples in 
+
+
+#define         GAS_LPG                      (0)
+#define         GAS_CO                       (1)
+#define         GAS_SMOKE                    (2)
+
+//two points are taken from the curve.
+//with these two points, a line is formed which is "approximately equivalent"
+//to the original curve.
+//data format:{ x, y, slope}; point1: (lg200, 0.21), point2: (lg10000, -0.59)
+float           LPGCurve[3]  =  {2.3, 0.21, -0.47};
+
+//two points are taken from the curve.
+//with these two points, a line is formed which is "approximately equivalent"
+//to the original curve.
+//data format:{ x, y, slope}; point1: (lg200, 0.72), point2: (lg10000,  0.15)
+float           COCurve[3]  =  {2.3, 0.72, -0.34};
+
+//two points are taken from the curve.
+//with these two points, a line is formed which is "approximately equivalent"
+//to the original curve.
+//data format:{ x, y, slope}; point1: (lg200, 0.53), point2: (lg10000,  -0.22)
+float           SmokeCurve[3] = {2.3, 0.53, -0.44};
+
+//Ro is initialized to 10 kilo ohms
+float           Ro           =  10;
 
 
 /**------------------ MQ135 Variables ------------------**/
-const int MQ135_pin = A11;
-int MQ135_reading = 0;
-float sulfide_value = 0;
+const int MQ135_pin = A10;
+MQ135 mq135_sensor = MQ135(MQ135_pin);
+float co2rzero, correctedCo2RZero, co2Resistance, co2 , correctedCo2;
 /*******************************************************************************/
 /*******************************************************************************/
 
 /**------------------ Calibration Variables ------------------**/
 bool isCalibrated = false;
+const byte CALIBRATION_PERIOD = 2;
+const int CALIBRATION_DELAY_TIMER = 2000;
 /*******************************************************************************/
 /*******************************************************************************/
 
 /**------------------ debugging Variables ------------------**/
 bool debugInit = false;
+bool isDebugging = false;
 unsigned long debugTimer = 0;
 const int DEBUG_DELAY = 3000;
 /*******************************************************************************/
@@ -177,7 +208,22 @@ void updateLCD()
 void lcdBoot()
 {
   lcd.begin(16, 2);
-  updateLCD();
+  lcd.clear();
+
+  switch (lang)
+  {
+    case 'E':
+      lcd.print("Calibrating!");
+      lcd.setCursor(0, 1);
+      lcd.print("Please Wait");
+      break;
+
+    case 'P':
+      lcd.print("Calibracion");
+      lcd.setCursor(0, 1);
+      lcd.print("Espera");
+      break;
+  }
 }
 
 void xbeeBoot()
@@ -237,7 +283,10 @@ void checkButton()
         sendSyn();
         syn_state = ACTIVE_BUTTON;
         dingDong();
-        //        Serial.println("You Pressed the button");
+        if (isDebugging)
+        {
+          Serial.println("You Pressed the button");
+        }
       }
     }
   }
@@ -274,7 +323,10 @@ void readPIR()
           isMotionDetected = true;
           sendSyn();
           syn_state = ACTIVE_MOTION;
-          //          Serial.println("Motion Detected!");
+          if (isDebugging)
+          {
+            Serial.println("Motion Detected!");
+          }
         }
       }
       else
@@ -307,9 +359,11 @@ void readTempAndHumid()
     humidity = dht.readHumidity();
     // Read temperature as Fahrenheit (isFahrenheit = true)
     fahrenheit = dht.readTemperature(true);
+    // Read temperature as Celsius (the default)
+    temperature = dht.readTemperature();
 
     // Check if any reads failed and exit early (to try again).
-    if (isnan(humidity) || isnan(fahrenheit))
+    if (isnan(humidity) || isnan(fahrenheit) || isnan(temperature))
     {
       //Serial.println("Failed to read from DHT sensor!");
       DHTinit = false;
@@ -334,19 +388,19 @@ void readPhotocell()
     lightLevel = analogRead(PHOTOR_PIN);
     //    Serial.print("LightLevel: ");
     //    Serial.print(lightLevel);
-    if (lightLevel < 10)
+    if (lightLevel < 100)
     {
       light_state = DARK;
     }
-    else if (lightLevel < 200)
+    else if (lightLevel < 400)
     {
       light_state = DIM;
     }
-    else if (lightLevel < 500)
+    else if (lightLevel < 700)
     {
       light_state = LIGHT;
     }
-    else if (lightLevel < 800)
+    else if (lightLevel < 900)
     {
       light_state = BRIGHT;
     }
@@ -388,6 +442,71 @@ void readRainSensor()
   }
 }
 
+float MQResistanceCalculation(int raw_adc)
+{
+  return ( ((float)RL_VALUE * (1023 - raw_adc) / raw_adc));
+}
+
+void MQCalibration()
+{
+  float val = 0;
+
+  for (int i = 0; i < CALIBARAION_SAMPLE_TIMES; i++)
+  {
+    val += MQResistanceCalculation(MQ2_PIN);
+    delay(CALIBRATION_SAMPLE_INTERVAL);
+  }
+  val = val / CALIBARAION_SAMPLE_TIMES;                 //calculate the average value
+
+  val = val / RO_CLEAN_AIR_FACTOR;                      //divided by RO_CLEAN_AIR_FACTOR yields the Ro
+  //according to the chart in the datasheet
+
+  Ro = val;
+
+  co2rzero = mq135_sensor.getRZero();
+  correctedCo2RZero = mq135_sensor.getCorrectedRZero(temperature, humidity);
+  co2Resistance = mq135_sensor.getResistance();
+  co2 = mq135_sensor.getPPM();
+  correctedCo2 = mq135_sensor.getCorrectedPPM(temperature, humidity);
+}
+
+float MQRead()
+{
+  float rs = 0;
+
+  for (int i = 0; i < READ_SAMPLE_TIMES; i++)
+  {
+    rs += MQResistanceCalculation(analogRead(MQ2_PIN));
+  }
+
+  rs = rs / READ_SAMPLE_TIMES;
+
+  return rs;
+}
+
+int MQGetGasPercentage(float rs_ro_ratio, int gas_id)
+{
+  if ( gas_id == GAS_LPG )
+  {
+    return MQGetPercentage(rs_ro_ratio, LPGCurve);
+  }
+  else if ( gas_id == GAS_CO )
+  {
+    return MQGetPercentage(rs_ro_ratio, COCurve);
+  }
+  else if ( gas_id == GAS_SMOKE )
+  {
+    return MQGetPercentage(rs_ro_ratio, SmokeCurve);
+  }
+
+  return 0;
+}
+
+int MQGetPercentage(float rs_ro_ratio, float *pcurve)
+{
+  return (pow(10, ( ((log(rs_ro_ratio) - pcurve[1]) / pcurve[2]) + pcurve[0])));
+}
+
 void readAirSensors()
 {
   if (!airSensInit)
@@ -397,29 +516,15 @@ void readAirSensors()
   }
   else if ( (millis() - airSensTimer) > AIRSENSOR_DELAY)
   {
-
-    MQ7_reading = analogRead(MQ7_pin); //reads the analaog value from the CO sensor's AOUT pin
-    CO_value = (1000.0 / 1023) * MQ7_reading;
-    Serial.print("CO ppm: ");
-    Serial.println(CO_value);
-
-    MQ3_reading = analogRead(MQ3_pin);
-    alcohol_value = (4.0 / 1023) * MQ3_reading;
-    Serial.print("Alcohol mg/L: ");
-    Serial.println(alcohol_value);
-
-    MQ2_reading = analogRead(MQ2_pin);
-    smoke_value = (1000.0 / 1023) * MQ2_reading;
-    Serial.print("smoke ppm: ");
-    Serial.println(smoke_value);
-
-    MQ135_reading = analogRead(MQ135_pin);
-    sulfide_value = (1000.0 / 1023) * MQ135_reading;
-    Serial.print("sulfide ppm: ");
-    Serial.println(sulfide_value);
-
+    lpg = MQGetGasPercentage(MQRead() / Ro, GAS_LPG);
+    co = MQGetGasPercentage(MQRead() / Ro, GAS_CO);
+    smoke = MQGetGasPercentage(MQRead() / Ro, GAS_SMOKE);
+    co2rzero = mq135_sensor.getRZero();
+    correctedCo2RZero = mq135_sensor.getCorrectedRZero(temperature, humidity);
+    co2Resistance = mq135_sensor.getResistance();
+    co2 = mq135_sensor.getPPM();
+    correctedCo2 = mq135_sensor.getCorrectedPPM(temperature, humidity);
     airSensInit = false;
-
   }
 }
 
@@ -625,11 +730,47 @@ void showData()
     Serial.println (humidity);
     Serial.print ("Heat Index Factor:");
     Serial.println (hif);
-    Serial.println("");
 
+    Serial.print("LPG : ");
+    Serial.print(lpg);
+    Serial.print("ppm");
+    Serial.print("    ");
+    Serial.print("CO : ");
+    Serial.print(co);
+    Serial.print("ppm");
+    Serial.print("    ");
+    Serial.print("SMOKE : ");
+    Serial.print(smoke);
+    Serial.print("ppm");
+    Serial.println("");
+    Serial.print("CO2 PPM : ");
+    Serial.print(co2);
+    Serial.print("ppm");
+    Serial.print("    ");
+    Serial.print("Corrected CO2 PPM : ");
+    Serial.print(correctedCo2);
+    Serial.print("ppm");
+    Serial.println("\n");
     debugInit = false;
   }
+}
 
+void calibrate()
+{
+  //calibrate photocell resistor
+  readPhotocell();
+  //calibrate rain sensor
+  readRainSensor();
+  //calibrateDHT
+  for (byte i = 0; i < CALIBRATION_PERIOD; i++)
+  {
+    readTempAndHumid();
+    delay(CALIBRATION_DELAY_TIMER);
+  }
+  //calibrate MQ2
+  MQCalibration();
+  isCalibrated = true;
+  updateLCD();
 }
 
 /*
@@ -649,27 +790,26 @@ void setup()
 */
 void loop()
 {
-  checkMsg();
-  //clear message buffer to prevent collision and weird behavior
-  checkMsgBuffer();
-  checkButton();
-  readPhotocell();
-  readRainSensor();
-  readTempAndHumid();
-  //  readAirSensors();
-  readPIR();
-  sendMsg();
-  resetLCD();
-
   if (!isCalibrated)
   {
-    isCalibrated = true;
+    calibrate();
   }
-  //  else
-  //  {
-  //    showData();
-  //
-  //    //TO-DO
-  //    //Write a function to send data
-  //  }
+  else
+  {
+    checkMsg();
+    //clear message buffer to prevent collision and weird behavior
+    checkMsgBuffer();
+    checkButton();
+    readPhotocell();
+    readRainSensor();
+    readTempAndHumid();
+    readAirSensors();
+    readPIR();
+    sendMsg();
+    resetLCD();
+    /** Uncomment prior to testing **/
+    showData();
+    isDebugging = true;
+    /** Uncomment prior to testing **/
+  }
 }

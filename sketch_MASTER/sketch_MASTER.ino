@@ -135,7 +135,7 @@ void printWifiStatus()
 
 void espBoot()
 {
-  int status = WL_IDLE_STATUS;
+  status = WL_IDLE_STATUS;
   clearLCDRow(1);
   lcd.setCursor(0, 1);
   lcd.print("Initializing WIFI");
@@ -315,6 +315,10 @@ void checkKeypad()
       case '#':
         espBoot();
         break;
+
+      case '0':
+        reboot();
+        break;
     }
   }
 }
@@ -429,13 +433,19 @@ void sendMsg()
   }
 }
 
-void setup()
+void reboot()
 {
   lcdBoot();
   ledBoot();
   buzzerBoot();
   xbeeBoot();
   espBoot();
+
+}
+
+void setup()
+{
+  reboot();
 }
 
 void loop()

@@ -1,3 +1,9 @@
+/*
+   Conard James B. Faraon
+   CSS427 Coding Assignment
+   Board used: Arduino Mega
+*/
+
 #include <QueueList.h>
 
 /* TASK for function pointers. */
@@ -11,8 +17,8 @@ volatile QueueList<struct Task> task_queue;
 /*******************************/
 
 /* ULTRASONIC variables */
-const byte SS_ECHO_PIN = 2;
-const byte SS_TRIG_PIN = 3;
+const byte SS_ECHO_PIN = 20;
+const byte SS_TRIG_PIN = 8;
 const int MAX_RANGE_INCH = 7;
 const int MIN_RANGE_INCH = 0;
 
@@ -34,27 +40,36 @@ char keys[ROWS][COLS] = {
   {'*', '0', '#'}
 };
 
-volatile QueueList<byte> key_row;
-volatile QueueList<byte> key_col;
+volatile byte key_row;
+volatile byte key_col;
+volatile bool isFound;
 
 byte rowPins[ROWS] = {4, 5, 6, 7}; //connect to the row pinouts of the keypad
-byte colPins[COLS] = {21, 20, 19}; //connect to the column pinouts of the keypad
+byte colPins[COLS] = {21, 2, 3}; //connect to the column pinouts of the keypad
 /*******************************/
 /*******************************/
 
+void emitWaves()
+{
+  digitalWrite(SS_TRIG_PIN, LOW);
+  delayMicroseconds(2);
+  digitalWrite(SS_TRIG_PIN, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(SS_TRIG_PIN, LOW);
+}
 
 void keyPadTask()
 {
-  noInterrupts();
-  Serial.println(keys[key_row.pop()][key_col.pop()]);
-  //Arduino Documentation: Serial data received while in the ISR may be lost.
-  //better to enable interrupts after Serial.prints
-  interrupts();
+  //isFound variable is also used for debouncing keypad
+  if (isFound)
+  {
+    Serial.println(keys[key_row][key_col]);
+    isFound = false;
+  }
 }
 
 void ultraSonicTask()
 {
-  noInterrupts();
   //Calculate the distance (in cm) based on the speed of sound.
   long dur = duration.pop();
   int distanceCm = dur * 0.034 / 2;
@@ -66,9 +81,6 @@ void ultraSonicTask()
     Serial.print(distanceCm);
     Serial.println(" cm");
   }
-  //Arduino Documentation: Serial data received while in the ISR may be lost.
-  //better to enable interrupts after Serial.prints
-  interrupts();
   delay(60);
 }
 
@@ -127,9 +139,9 @@ void ISR_keyCol0()
 
   if (tmp != -1)
   {
-    key_row.push(tmp);
-    key_col.push(0);
-
+    key_row = tmp;
+    key_col = 0;
+    isFound = true;
   }
   Task t;
   t.function = keyPadTask;
@@ -162,9 +174,9 @@ void ISR_keyCol1()
 
   if (tmp != -1)
   {
-    key_row.push(tmp);
-    key_col.push(1);
-
+    key_row = tmp;
+    key_col = 1;
+    isFound = true;
   }
   Task t;
   t.function = keyPadTask;
@@ -198,9 +210,9 @@ void ISR_keyCol2()
 
   if (tmp != -1)
   {
-    key_row.push(tmp);
-    key_col.push(2);
-
+    key_row = tmp;
+    key_col = 2;
+    isFound = true;
   }
   Task t;
   t.function = keyPadTask;
@@ -241,22 +253,18 @@ void setup()
   attachInterrupt(digitalPinToInterrupt(colPins[2]), ISR_keyCol2, CHANGE);
   /*******************************/
   /*******************************/
-
 }
 
 void loop()
 {
-  digitalWrite(SS_TRIG_PIN, LOW);
-  delayMicroseconds(2);
-  digitalWrite(SS_TRIG_PIN, HIGH);
-  delayMicroseconds(10);
-  digitalWrite(SS_TRIG_PIN, LOW);
-
   while (!task_queue.isEmpty())
   {
     Task t = task_queue.pop();
     t.function();
   }
 
+  //does not make sense placing it in the function queue
+  //because the ultra sonic sensor needs to run in the background.
+  emitWaves();
 }
 

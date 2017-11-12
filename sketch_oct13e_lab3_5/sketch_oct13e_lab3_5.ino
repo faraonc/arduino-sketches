@@ -5,8 +5,8 @@
  * Board used: Arduino Mega
  */
 
-const byte SS_ECHO_PIN = 2;
-const byte SS_TRIG_PIN = 3;
+const byte SS_ECHO_PIN = 20;
+const byte SS_TRIG_PIN = 8;
 const int MAX_RANGE_INCH = 7; 
 const int MIN_RANGE_INCH = 0; 
 

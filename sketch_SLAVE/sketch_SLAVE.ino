@@ -119,8 +119,8 @@ float           Ro           =  10;
 
 
 /**------------------ MQ135 Variables ------------------**/
-const int MQ135_pin = A10;
-MQ135 mq135_sensor = MQ135(MQ135_pin);
+const int MQ135_PIN = A10;
+MQ135 mq135_sensor = MQ135(MQ135_PIN);
 float co2rzero, correctedCo2RZero, co2Resistance, co2 , correctedCo2;
 /*******************************************************************************/
 /*******************************************************************************/
@@ -150,6 +150,27 @@ bool isAcked = false;
 unsigned long lcdBuzzTimer = 0;
 bool isBuzzed = false;
 LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
+/*******************************************************************************/
+/*******************************************************************************/
+
+/**------------------ Dust Sensor Variables ------------------**/
+// Pin 1 VCC is connected to Arduino 5V pin with capacitor and resistor
+// Pin 2 GND is connected to any Arduino ground pin.
+// Pin 3 ILED (Infrared LED) is connected to Arduino 52 pin
+// Pin 4 GND is connected to any Arduino ground pin.
+// Pin 5 AOUT (Analog Output) is connected to Arduino A11 pin.
+// Pin 6 VCC is connected to Arduino 5V pin.
+const byte DUST_LED = 52;
+const int DUST_PIN = A11;
+const int DUST_SAMPLING_TIME = 280;
+const int DUST_DELTA_TIME = 40;
+const int DUST_SLEEP_TIME = 9680;
+float dustVoMeasured = 0;
+float dustCalcVoltage = 0;
+float dustDensity = 0;
+bool dustInit = false;
+unsigned long dustTimer = 0;
+const int DUST_DELAY = 2000;
 /*******************************************************************************/
 /*******************************************************************************/
 
@@ -250,6 +271,10 @@ void photocellBoot()
   pinMode(PHOTOR_PIN, INPUT);
 }
 
+void dustBoot()
+{
+  pinMode(DUST_LED, OUTPUT);
+}
 
 void dingDong()
 {
@@ -528,6 +553,38 @@ void readAirSensors()
   }
 }
 
+void readDustSensor()
+{
+  if (!dustInit)
+  {
+    dustInit = true;
+    dustTimer = millis();
+  }
+  else if ((millis() - dustTimer) >= DUST_DELAY)
+  {
+    // power on the LED
+    digitalWrite(DUST_LED, LOW);
+    delayMicroseconds(DUST_SAMPLING_TIME);
+
+    // read the dust value
+    dustVoMeasured = analogRead(DUST_PIN);
+    delayMicroseconds(DUST_DELTA_TIME);
+    // turn the LED off
+    digitalWrite(DUST_LED, HIGH);
+    delayMicroseconds(DUST_SLEEP_TIME);
+
+    // 0 - 5V mapped to 0 - 1023 integer values
+    // recover voltage
+    dustCalcVoltage = dustVoMeasured * (5.0 / 1024.0);
+
+    // linear eqaution taken from http://www.howmuchsnow.com/arduino/airquality/
+    // Chris Nafis (c) 2012
+    dustDensity = 0.17 * dustCalcVoltage - 0.1;
+    // unit: mg/m3
+    dustInit = false;
+  }
+}
+
 void greetGuest()
 {
   clearLCDRow(1);
@@ -750,6 +807,10 @@ void showData()
     Serial.print("Corrected CO2 PPM : ");
     Serial.print(correctedCo2);
     Serial.print("ppm");
+    Serial.println("");
+    Serial.print("Dust : ");
+    Serial.print(dustDensity);
+    Serial.print("mg/m^3");
     Serial.println("\n");
     debugInit = false;
   }
@@ -761,6 +822,8 @@ void calibrate()
   readPhotocell();
   //calibrate rain sensor
   readRainSensor();
+  //calibrate dust sensor
+  readDustSensor();
   //calibrateDHT
   for (byte i = 0; i < CALIBRATION_PERIOD; i++)
   {
@@ -783,6 +846,7 @@ void setup()
   buttonBoot();
   sensorsBoot();
   photocellBoot();
+  dustBoot();
 }
 
 /*
@@ -804,6 +868,7 @@ void loop()
     readRainSensor();
     readTempAndHumid();
     readAirSensors();
+    readDustSensor();
     readPIR();
     sendMsg();
     resetLCD();

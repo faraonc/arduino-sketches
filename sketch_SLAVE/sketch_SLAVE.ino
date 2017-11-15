@@ -580,6 +580,10 @@ void readDustSensor()
     // linear eqaution taken from http://www.howmuchsnow.com/arduino/airquality/
     // Chris Nafis (c) 2012
     dustDensity = 0.17 * dustCalcVoltage - 0.1;
+    if (dustDensity < 0)
+    {
+       dustDensity = 0;
+    }
     // unit: mg/m3
     dustInit = false;
   }
@@ -810,7 +814,8 @@ void showData()
     Serial.println("");
     Serial.print("Dust : ");
     Serial.print(dustDensity);
-    Serial.print("mg/m^3");
+    Serial.println("mg/m^3");
+    Serial.print(dustVoMeasured);
     Serial.println("\n");
     debugInit = false;
   }

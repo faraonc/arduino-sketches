@@ -5,6 +5,8 @@
 /**------------------ DHT Variables ------------------**/
 #define DHTPIN 23
 #define DHTTYPE DHT11
+const float MAX_TEMP = 160; // Fahrenheit
+const float MAX_HUMI = 100;
 bool DHTinit = false;
 unsigned long DHTtimer = 0;
 const int DHT_DELAY = 2000;
@@ -70,12 +72,16 @@ byte light_state = LIGHT;
 /*******************************************************************************/
 
 /**------------------ Air Sensor Variables ------------------**/
-
 bool airSensInit = false;
 unsigned long airSensTimer = 0;
 const int AIRSENSOR_DELAY = 2000;
+const unsigned int MAX_CO = 800;
+const unsigned int MAX_CO2 = 5000;
+const unsigned int MAX_SMOKE = 800;
+const unsigned int MAX_LPG = 2000;
 
 /**------------------ MQ2 Variables ------------------**/
+
 const int MQ2_PIN = A9;
 unsigned int lpg = 0;
 unsigned int co = 0;
@@ -160,6 +166,7 @@ LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
 // Pin 4 GND is connected to any Arduino ground pin.
 // Pin 5 AOUT (Analog Output) is connected to Arduino A11 pin.
 // Pin 6 VCC is connected to Arduino 5V pin.
+const float MAX_DUST = 2.00;
 const byte DUST_LED = 52;
 const int DUST_PIN = A11;
 const int DUST_SAMPLING_TIME = 280;
@@ -397,6 +404,9 @@ void readTempAndHumid()
 
     // Compute heat index in Fahrenheit (the default)
     hif = dht.computeHeatIndex(fahrenheit, humidity);
+    if (fahrenheit > MAX_TEMP) fahrenheit = MAX_TEMP;
+    if (humidity > MAX_HUMI) humidity = MAX_HUMI;
+
     DHTinit = false;
   }
 }
@@ -549,6 +559,10 @@ void readAirSensors()
     co2Resistance = mq135_sensor.getResistance();
     co2 = mq135_sensor.getPPM();
     correctedCo2 = mq135_sensor.getCorrectedPPM(temperature, humidity);
+    if (co > MAX_CO)co = MAX_CO;
+    if (smoke > MAX_SMOKE)smoke = MAX_SMOKE;
+    if (correctedCo2 > MAX_CO2) correctedCo2 = MAX_CO2;
+    if (lpg > MAX_LPG) lpg = MAX_LPG;
     airSensInit = false;
   }
 }
@@ -580,10 +594,8 @@ void readDustSensor()
     // linear eqaution taken from http://www.howmuchsnow.com/arduino/airquality/
     // Chris Nafis (c) 2012
     dustDensity = 0.17 * dustCalcVoltage - 0.1;
-    if (dustDensity < 0)
-    {
-       dustDensity = 0;
-    }
+    if (dustDensity < 0) dustDensity = 0;
+    if (dustDensity > MAX_DUST) dustDensity = MAX_DUST;
     // unit: mg/m3
     dustInit = false;
   }

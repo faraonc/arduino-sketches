@@ -68,6 +68,17 @@ Keypad keypad = Keypad( makeKeymap(keys), rowPins, colPins, ROWS, COLS);
 const int RS = 12, EN = 11, D4 = 5, D5 = 4, D6 = 3, D7 = 2;
 const byte LED_COL = 20;
 LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
+enum {
+  CO,
+  CO2,
+  S,
+  LPG,
+  T,
+  H,
+  DT,
+  LT,
+  RN
+};
 /*******************************************************************************/
 /*******************************************************************************/
 
@@ -91,12 +102,89 @@ void clearLCDRow(byte row)
   }
 }
 
+void lcdPrint(int field, String data)
+{
+  switch (field)
+  {
+    case (CO):
+      lcd.setCursor(3, 1);
+      lcd.print("   ");
+      lcd.setCursor(3, 1);
+      lcd.print(data);
+      break;
+    case (CO2):
+      lcd.setCursor(10, 1);
+      lcd.print("    ");
+      lcd.setCursor(10, 1);
+      lcd.print(data);
+      break;
+    case (S):
+      lcd.setCursor(17, 1);
+      lcd.print("   ");
+      lcd.setCursor(17, 1);
+      lcd.print(data);
+      break;
+    case (LPG):
+      lcd.setCursor(4, 2);
+      lcd.print("    ");
+      lcd.setCursor(4, 2);
+      lcd.print(data);
+      break;
+    case (T):
+      lcd.setCursor(11, 2);
+      lcd.print("   ");
+      lcd.setCursor(11, 2);
+      lcd.print(data);
+      break;
+    case (H):
+      lcd.setCursor(17, 2);
+      lcd.print("   ");
+      lcd.setCursor(17, 2);
+      lcd.print(data);
+      break;
+    case (DT):
+      lcd.setCursor(3, 3);
+      lcd.print("    ");
+      lcd.setCursor(3, 3);
+      lcd.print(data);
+      break;
+    case (LT):
+      lcd.setCursor(11, 3);
+      lcd.print("  ");
+      lcd.setCursor(11, 3);
+      lcd.print(data);
+      break;
+    case (RN):
+      lcd.setCursor(17, 3);
+      lcd.print("   ");
+      lcd.setCursor(17, 3);
+      lcd.print(data);
+      break;
+  }
+}
+
 void lcdBoot()
 {
   // set up the LCD's number of columns and rows:
   lcd.begin(20, 4);
-  // Print a message to the LCD.
-  lcd.print("   Smart Doorbell   ");
+  lcd.setCursor(0, 1);
+  lcd.print("CO:");
+  lcd.setCursor(7, 1);
+  lcd.print("C2:");
+  lcd.setCursor(15, 1);
+  lcd.print("S:");
+  lcd.setCursor(0, 2);
+  lcd.print("LPG:");
+  lcd.setCursor(9, 2);
+  lcd.print("T:");
+  lcd.setCursor(15, 2);
+  lcd.print("H:");
+  lcd.setCursor(0, 3);
+  lcd.print("DT:");
+  lcd.setCursor(8, 3);
+  lcd.print("LT:");
+  lcd.setCursor(14, 3);
+  lcd.print("RN:");
 }
 
 void buzzerBoot()
@@ -127,8 +215,8 @@ void printWifiStatus()
 
   // print your WiFi shield's IP address
   IPAddress ip = WiFi.localIP();
-  clearLCDRow(1);
-  lcd.setCursor(0, 1);
+  clearLCDRow(0);
+  lcd.setCursor(0, 0);
   lcd.print("IP: ");
   lcd.print(ip);
 }
@@ -136,8 +224,8 @@ void printWifiStatus()
 void espBoot()
 {
   status = WL_IDLE_STATUS;
-  clearLCDRow(1);
-  lcd.setCursor(0, 1);
+  clearLCDRow(0);
+  lcd.setCursor(0, 0);
   lcd.print("Initializing WIFI");
   // Start the software serial for communication with the ESP8266
   ESPserial.begin(9600);
@@ -148,8 +236,8 @@ void espBoot()
   // check for the presence of the shield
   if (WiFi.status() == WL_NO_SHIELD)
   {
-    clearLCDRow(1);
-    lcd.setCursor(0, 1);
+    clearLCDRow(0);
+    lcd.setCursor(0, 0);
     lcd.print("No WiFi shield!");
     // don't continue
     // while (true);
@@ -158,8 +246,8 @@ void espBoot()
   // attempt to connect to WiFi network
   if (status != WL_CONNECTED)
   {
-    clearLCDRow(1);
-    lcd.setCursor(0, 1);
+    clearLCDRow(0);
+    lcd.setCursor(0, 0);
     lcd.print("Connect: "  );
     lcd.print(SSID);
     // Connect to WPA/WPA2 network
@@ -175,8 +263,8 @@ void espBoot()
   }
   else if (status != WL_CONNECTED)
   {
-    clearLCDRow(1);
-    lcd.setCursor(0, 1);
+    clearLCDRow(0);
+    lcd.setCursor(0, 0);
     lcd.print("WIFI OFF");
   }
 }

@@ -29,7 +29,7 @@ bool is_syn_sent = false;
 
 byte incoming_byte;
 char msg[MSG_BUFFER];
-byte msg_size = 0;
+unsigned int msg_size = 0;
 bool is_msg_buffer_used = false;
 unsigned long msg_buffer_timer = 0;
 const int MSG_BUFFER_TIMEOUT = 2000;
@@ -92,6 +92,13 @@ const int BUZZER_TONE2 = 1000;
 const int BUZZER_DELAY = 250;
 /*******************************************************************************/
 /*******************************************************************************/
+
+/**------------------ Display variables ------------------**/
+String light = "", rain = "", temperature = "", humidity = "", lpg = "", co = "", co2 = "", smoke = "", dust = "";
+
+/*******************************************************************************/
+/*******************************************************************************/
+
 
 void clearLCDRow(byte row)
 {
@@ -159,8 +166,20 @@ void lcdPrint(int field, String data)
       lcd.print("   ");
       lcd.setCursor(17, 3);
       lcd.print(data);
-      break;
   }
+}
+
+void lcdDisplay()
+{
+  lcdPrint(CO, co);
+  lcdPrint(CO2, co2);
+  lcdPrint(S, smoke);
+  lcdPrint(LPG, lpg);
+  lcdPrint(T, temperature);
+  lcdPrint(H, humidity);
+  lcdPrint(DT, dust);
+  lcdPrint(LT, light);
+  lcdPrint(RN, rain);
 }
 
 void lcdBoot()
@@ -428,21 +447,108 @@ void checkMsgBuffer()
     clearMsgBuffer();
   }
 }
-
+void mapLight (String lightData)
+{
+  switch (lightData.charAt(0))
+  {
+    case '0':
+      light = "DK";
+      break;
+    case '1':
+      light = "DM";
+      break;
+    case '2':
+      light = "LT";
+      break;
+    case '3':
+      light = "BR";
+      break;
+    case '4':
+      light = "BB";
+  }
+}
+void mapRain(String rainData)
+{
+  switch (rainData.charAt(0))
+  {
+    case '0':
+      rain = "HVY";
+      break;
+    case '1':
+      rain = "WET";
+      break;
+    case '2':
+      rain = "DRY";
+  }
+}
+void translate()
+{
+  String default_data = "";
+  for (int i = 0 ; i < msg_size; i++)
+  {
+    char c = msg[i];
+    switch (c)
+    {
+      case 'Z':
+        break;
+      case 'L':
+        break;
+      case 'R':
+        mapLight(default_data);
+        default_data = "" ;
+        break;
+      case 'T':
+        mapRain(default_data);
+        default_data = "";
+        break;
+      case 'H':
+        temperature  = default_data;
+        default_data = "";
+        break;
+      case 'G':
+        humidity = default_data;
+        default_data = "";
+        break;
+      case 'C':
+        lpg = default_data;
+        default_data = "";
+        break;
+      case 'E':
+        co = default_data;
+        default_data = "";
+        break;
+      case 'N':
+        smoke = default_data;
+        default_data = "";
+        break;
+      case 'D':
+        co2 = default_data;
+        default_data = "";
+        break;
+      case 'S':
+        dust = default_data;
+        default_data = "";
+        break;
+      default:
+        default_data += c;
+    }
+  }
+}
 void decodeMsg()
 {
-  for (byte i = 0; i < msg_size; i++)
+  switch (msg[0])
   {
-    switch (msg[i])
-    {
-      case 'B':
-        buzz();
-        break;
+    case 'B':
+      buzz();
+      break;
 
-      case 'M':
-        detectedMotion();
-        break;
-    }
+    case 'M':
+      detectedMotion();
+      break;
+      
+    case 'Z':
+      translate();
+      lcdDisplay();
   }
   clearMsgBuffer();
 }
@@ -476,6 +582,8 @@ void checkMsg()
       char c = (char)incoming_byte;
       if (c == 'S')
       {
+        msg[msg_size] = c;
+        msg_size++;
         decodeMsg();
       }
       else

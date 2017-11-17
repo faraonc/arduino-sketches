@@ -188,10 +188,17 @@ enum
 {
   LAZY,
   ACTIVE_BUTTON,
-  ACTIVE_MOTION
+  ACTIVE_MOTION,
+  ACTIVE_DATA
 };
 byte syn_state = LAZY;
 
+bool send_init = false;
+bool isSendingData = false;
+unsigned long send_timer = 0;
+const unsigned long SEND_INTERVAL_DELAY = 60000;
+const unsigned long SEND_INIT_DELAY = 30000;
+unsigned long send_delay = SEND_INIT_DELAY;
 unsigned int syn = 0;
 unsigned int ack_master = 0;
 unsigned int incomingByte = 0;
@@ -303,7 +310,7 @@ void checkButton()
     lastButtonDebounceTime = millis();
   }
 
-  if ((millis() - lastButtonDebounceTime) > DEBOUNCE_BUTTON_DELAY)
+  if ((millis() - lastButtonDebounceTime) > DEBOUNCE_BUTTON_DELAY && syn_state == LAZY)
   {
     if (reading != buttonState)
     {
@@ -341,7 +348,7 @@ void readPIR()
     lastPIRDebounceTime = millis();
   }
 
-  if ((millis() - lastPIRDebounceTime) > DEBOUNCE_PIR_DELAY)
+  if ((millis() - lastPIRDebounceTime) > DEBOUNCE_PIR_DELAY && syn_state == LAZY)
   {
     if (reading != pirState)
     {
@@ -726,6 +733,13 @@ void sendMsg()
         Serial.write('S');
         isMotionDetected = false;
       }
+      else if (isSendingData)
+      {
+        Serial.write('Z');
+        writeToMaster();
+        Serial.write('S');
+        isSendingData = false;
+      }
       syn++;
       is_syn_sent = false;
       syn_state = LAZY;
@@ -852,6 +866,115 @@ void calibrate()
   isCalibrated = true;
   updateLCD();
 }
+/*
+  sendData()
+ */
+void sendData()
+{
+  if (!send_init)
+  {
+    send_init = true;
+    send_timer = millis();
+  }
+  else if ((millis() - send_timer) >= send_delay)
+  {
+    syn_state = ACTIVE_DATA;
+    sendSyn();
+    isSendingData = true;
+    send_delay = SEND_INTERVAL_DELAY;
+    send_init = false;
+  }
+}
+
+void tokenizeSendInt(unsigned int tempData)
+{
+      //Gases
+     String s = String(tempData);
+     for (int i = 0; i < s.length(); i ++ )
+     {
+      Serial.write( s.charAt(i));
+     }
+}
+
+void tokenizeSendFloat(float tempData, char type)
+{
+  if (type == 'H')
+  {
+    //using 0 for Temp and Humidity
+    String s = String(tempData, 0);
+    for (byte i = 0; i < s.length(); i ++ )
+    {
+      Serial.write( s.charAt(i));
+    }
+  }
+  else if (type == 'D')
+  {
+    //using 2 for Dust
+    String s = String(tempData, 2);
+    for (byte i = 0; i < 4; i ++ )
+    {
+      Serial.write( s.charAt(i));
+    }
+  }
+}
+
+/*
+  writeToMaster()
+*/
+void writeToMaster()
+{
+  Serial.write('L');
+  switch (light_state)
+  {
+    case DARK:
+      Serial.write('0');
+      break;
+    case DIM:
+      Serial.write('1');
+      break;
+    case LIGHT:
+      Serial.write('2');
+      break;
+    case BRIGHT:
+      Serial.write('3');
+      break;
+    case VERY_BRIGHT:
+      Serial.write('4');
+  }
+  Serial.write('R');
+  switch (rainS_state)
+  {
+    case HEAVY_RAIN:
+      Serial.write('0');
+      break;
+    case LIGHT_RAIN:
+      Serial.write('1');
+      break;
+    case DRY:
+      Serial.write('2');
+  }
+  
+  Serial.write('T');
+  tokenizeSendFloat(fahrenheit,'H');
+  
+  Serial.write('H');
+  tokenizeSendFloat(humidity,'H');
+
+  Serial.write('G');
+  tokenizeSendInt(lpg);
+  
+  Serial.write('C');
+  tokenizeSendInt(co);
+
+  Serial.write('E');
+  tokenizeSendInt(smoke);
+  
+  Serial.write('N');
+  tokenizeSendInt(correctedCo2);
+  
+  Serial.write('D');
+  tokenizeSendFloat(dustDensity,'D');
+}
 
 /*
    Setup
@@ -889,9 +1012,10 @@ void loop()
     readPIR();
     sendMsg();
     resetLCD();
+    sendData();
     /** Uncomment prior to testing **/
-    showData();
-    isDebugging = true;
+    //showData();
+    //isDebugging = true;
     /** Uncomment prior to testing **/
   }
 }

@@ -209,6 +209,7 @@ char msg[MSG_BUFFER];
 byte msg_size = 0;
 bool is_msg_buffer_used = false;
 unsigned long msg_buffer_timer = 0;
+bool onDemand = false;
 /*******************************************************************************/
 /*******************************************************************************/
 
@@ -663,6 +664,9 @@ void decodeMsg()
       case 'A':
         greetGuest();
         break;
+
+      case 'D':
+        onDemand = true;
     }
   }
   clearMsgBuffer();
@@ -868,7 +872,7 @@ void calibrate()
 }
 /*
   sendData()
- */
+*/
 void sendData()
 {
   if (!send_init)
@@ -884,16 +888,23 @@ void sendData()
     send_delay = SEND_INTERVAL_DELAY;
     send_init = false;
   }
+  else if(onDemand)
+  {
+    syn_state = ACTIVE_DATA;
+    sendSyn();
+    isSendingData = true;
+    onDemand = false;
+  }
 }
 
 void tokenizeSendInt(unsigned int tempData)
 {
-      //Gases
-     String s = String(tempData);
-     for (int i = 0; i < s.length(); i ++ )
-     {
-      Serial.write( s.charAt(i));
-     }
+  //Gases
+  String s = String(tempData);
+  for (int i = 0; i < s.length(); i ++ )
+  {
+    Serial.write( s.charAt(i));
+  }
 }
 
 void tokenizeSendFloat(float tempData, char type)
@@ -953,27 +964,27 @@ void writeToMaster()
     case DRY:
       Serial.write('2');
   }
-  
+
   Serial.write('T');
-  tokenizeSendFloat(fahrenheit,'H');
-  
+  tokenizeSendFloat(fahrenheit, 'H');
+
   Serial.write('H');
-  tokenizeSendFloat(humidity,'H');
+  tokenizeSendFloat(humidity, 'H');
 
   Serial.write('G');
   tokenizeSendInt(lpg);
-  
+
   Serial.write('C');
   tokenizeSendInt(co);
 
   Serial.write('E');
   tokenizeSendInt(smoke);
-  
+
   Serial.write('N');
   tokenizeSendInt(correctedCo2);
-  
+
   Serial.write('D');
-  tokenizeSendFloat(dustDensity,'D');
+  tokenizeSendFloat(dustDensity, 'D');
 }
 
 /*

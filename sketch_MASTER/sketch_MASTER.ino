@@ -39,7 +39,8 @@ enum
   LAZY,
   ENGLISH,
   SPANISH,
-  GUEST_ACK
+  GUEST_ACK,
+  ON_DEMAND
 };
 byte syn_state = LAZY;
 /*******************************************************************************/
@@ -57,6 +58,7 @@ char keys[ROWS][COLS] = {
 
 //connect to the row pinouts of the keypad
 byte rowPins[ROWS] = {25, 24, 23, 22};
+bool isRequesting = false;
 
 //connect to the column pinouts of the keypad
 byte colPins[COLS] = {28, 27, 26};
@@ -419,13 +421,21 @@ void checkKeypad()
         sendSyn();
         break;
 
+      case '5':
+        if (!isRequesting)
+        {
+          isRequesting = true;
+          syn_state = ON_DEMAND;
+          sendSyn();
+        }
+        break;
+
       case '#':
         espBoot();
         break;
 
       case '0':
         reboot();
-        break;
     }
   }
 }
@@ -447,6 +457,7 @@ void checkMsgBuffer()
     clearMsgBuffer();
   }
 }
+
 void mapLight (String lightData)
 {
   switch (lightData.charAt(0))
@@ -464,9 +475,10 @@ void mapLight (String lightData)
       light = "BR";
       break;
     case '4':
-      light = "BB";
+      light = "VB";
   }
 }
+
 void mapRain(String rainData)
 {
   switch (rainData.charAt(0))
@@ -481,9 +493,12 @@ void mapRain(String rainData)
       rain = "DRY";
   }
 }
+
 void translate()
 {
-  String default_data = "";
+  char default_data[10];
+  byte index = 0;
+  memset(default_data, 0, sizeof(default_data));
   for (int i = 0 ; i < msg_size; i++)
   {
     char c = msg[i];
@@ -495,45 +510,57 @@ void translate()
         break;
       case 'R':
         mapLight(default_data);
-        default_data = "" ;
+        index = 0;
+        memset(default_data, 0, sizeof(default_data));
         break;
       case 'T':
         mapRain(default_data);
-        default_data = "";
+        index = 0;
+        memset(default_data, 0, sizeof(default_data));
         break;
       case 'H':
         temperature  = default_data;
-        default_data = "";
+        index = 0;
+        memset(default_data, 0, sizeof(default_data));
         break;
       case 'G':
         humidity = default_data;
-        default_data = "";
+        index = 0;
+        memset(default_data, 0, sizeof(default_data));
         break;
       case 'C':
         lpg = default_data;
-        default_data = "";
+        index = 0;
+        memset(default_data, 0, sizeof(default_data));
         break;
       case 'E':
         co = default_data;
-        default_data = "";
+        index = 0;
+        memset(default_data, 0, sizeof(default_data));
         break;
       case 'N':
         smoke = default_data;
-        default_data = "";
+        index = 0;
+        memset(default_data, 0, sizeof(default_data));
         break;
       case 'D':
         co2 = default_data;
-        default_data = "";
+        index = 0;
+        memset(default_data, 0, sizeof(default_data));
         break;
       case 'S':
         dust = default_data;
-        default_data = "";
+        index = 0;
+        memset(default_data, 0, sizeof(default_data));
+        isRequesting = false;
         break;
       default:
-        default_data += c;
+        default_data[index] = c;
+        index++;
     }
   }
 }
+
 void decodeMsg()
 {
   switch (msg[0])
@@ -545,7 +572,7 @@ void decodeMsg()
     case 'M':
       detectedMotion();
       break;
-      
+
     case 'Z':
       translate();
       lcdDisplay();
@@ -621,6 +648,9 @@ void sendMsg()
           Serial.write('A');
           Serial.write('S');
           break;
+        case ON_DEMAND:
+          Serial.write('D');
+          Serial.write('S');
       }
       syn++;
       is_syn_sent = false;

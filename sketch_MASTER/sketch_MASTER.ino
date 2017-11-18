@@ -506,54 +506,65 @@ void translate()
     {
       case 'Z':
         break;
+
       case 'L':
         break;
+
       case 'R':
         mapLight(default_data);
         index = 0;
         memset(default_data, 0, sizeof(default_data));
         break;
+
       case 'T':
         mapRain(default_data);
         index = 0;
         memset(default_data, 0, sizeof(default_data));
         break;
+
       case 'H':
         temperature  = default_data;
         index = 0;
         memset(default_data, 0, sizeof(default_data));
         break;
+
       case 'G':
         humidity = default_data;
         index = 0;
         memset(default_data, 0, sizeof(default_data));
         break;
+
       case 'C':
         lpg = default_data;
         index = 0;
         memset(default_data, 0, sizeof(default_data));
         break;
+
       case 'E':
         co = default_data;
         index = 0;
         memset(default_data, 0, sizeof(default_data));
         break;
+
       case 'N':
         smoke = default_data;
         index = 0;
         memset(default_data, 0, sizeof(default_data));
         break;
+
       case 'D':
         co2 = default_data;
         index = 0;
         memset(default_data, 0, sizeof(default_data));
         break;
+
       case 'S':
         dust = default_data;
         index = 0;
         memset(default_data, 0, sizeof(default_data));
         isRequesting = false;
         break;
+
       default:
         default_data[index] = c;
         index++;
@@ -648,6 +659,7 @@ void sendMsg()
           Serial.write('A');
           Serial.write('S');
           break;
+
         case ON_DEMAND:
           Serial.write('D');
           Serial.write('S');

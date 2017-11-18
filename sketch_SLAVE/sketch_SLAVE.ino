@@ -870,6 +870,7 @@ void calibrate()
   isCalibrated = true;
   updateLCD();
 }
+
 /*
   sendData()
 */
@@ -888,7 +889,7 @@ void sendData()
     send_delay = SEND_INTERVAL_DELAY;
     send_init = false;
   }
-  else if(onDemand)
+  else if (onDemand)
   {
     syn_state = ACTIVE_DATA;
     sendSyn();

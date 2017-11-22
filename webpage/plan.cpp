@@ -1,0 +1,59 @@
+const String H1 = "HTTP/1.1 200 OK\nContent-type:text/html\n\n<!DOCTYPE html><html><head>";
+const String H2 = "<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\">";
+const String H3 = "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js\"></script>";
+const String H4 = "<script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>";
+const String H5 = "</head><body style=\"background-color: #4b2e83; color: #b7a57a;\"><nav class=\"navbar navbar-inverse container-fluid\">";
+const String H6 = "<ul class=\"nav navbar-nav\"><li class=\"active\"><a href=\"/H\">Refresh Data</a></li><li class=\"dropdown\">";
+			
+					<a class="dropdown-toggle" data-toggle="dropdown" href="#">Communication<span class="caret"></span></a>
+					<ul class="dropdown-menu">
+						<li><a>Master to Slave: 5</a></li>
+						<li><a>Slave to Master: 4</a></li>
+						<li><a>Master to Terminal: 4</a></li>
+						<li><a>Terminal to Master: 4</a></li>
+					</ul>
+				</li>
+			</ul>
+	</nav>
+	<div class="container-fluid text-center">
+		<div class="jumbotron jumbotron-fluid" style="background-color:#85754d;color:#fff;">
+			<h1>Smart Doorbell Dashboard</h1>
+		</div>
+		<table class="table table-bordered">
+			<thead>
+				<tr>
+					<td>Temperature</td>
+					<td>Humidity</td>
+					<td>Rain</td>
+					<td>Light</td>
+					<td>Dust</td>
+					<td>Smoke</td>
+					<td>CO</td>
+					<td>CO2</td>
+					<td>LPG</td>
+				</tr>
+			</thead>
+			<tbody>
+				<tr>
+					<td>70&#8457;</td>
+					<td>100%</td>
+					<td>WET</td>
+					<td>BRIGHT</td>
+					<td>0.02 mg/m<sup>3</sup></td>
+					<td>1 ppm</td>
+					<td>3 ppm</td>
+					<td>1000 ppm</td>
+					<td>1 ppm</td>
+				</tr>
+			</tbody>
+		</table>
+
+		<hr style="border-top: 1px solid #85754d;">
+
+		<p>&copy;2017 Copyright: Pouria &amp; Conard</p>
+
+	</div>
+
+
+</body>
+</html>

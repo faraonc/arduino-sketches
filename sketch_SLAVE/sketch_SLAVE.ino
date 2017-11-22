@@ -635,6 +635,9 @@ void clearMsgBuffer()
   is_handshake_completed = false;
   is_syn_sent = false;
   syn_state = LAZY;
+  isButtonPressed = false;
+  isMotionDetected = false;
+  isSendingData = false;
 }
 
 void checkMsgBuffer()

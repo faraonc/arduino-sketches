@@ -23,6 +23,8 @@ int status = WL_IDLE_STATUS;
 
 unsigned int ack_slave = 0;
 unsigned int syn = 0;
+unsigned int ack_terminal = 0;
+unsigned int syn_terminal = 0;
 
 bool is_handshake_completed = false;
 bool is_syn_sent = false;
@@ -43,6 +45,41 @@ enum
   ON_DEMAND
 };
 byte syn_state = LAZY;
+
+const String H1 = "HTTP/1.1 200 OK\nContent-type:text/html\n\n<!DOCTYPE html><html><head>";
+const String H2 = "<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\">";
+const String H3 = "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js\"></script>";
+const String H4 = "<script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>";
+const String H5 = "</head><body style=\"background-color: #4b2e83; color: #b7a57a;\"><nav class=\"navbar navbar-inverse\"><div class=\"container-fluid\">";
+const String H6 = "<div class=\"navbar-header\"><p class=\"navbar-brand\">Team Optimistic</p></div><ul class=\"nav navbar-nav\">";
+const String H7 = "<li class=\"active\"><a href=\"/R\">Refresh Data</a></li><li class=\"dropdown\"><a class=\"dropdown-toggle\"";
+const String H8 = "data-toggle=\"dropdown\" href=\"#\">Communication<span class=\"caret\"></span></a><ul class=\"dropdown-menu\">";
+const String H9 = "<li><a>Master to Slave: ";
+const String H10 = "</a></li><li><a>Slave to Master: ";
+const String H11 = "</a></li><li><a>Master to Terminal: ";
+const String H12 = "</a></li><li><a>Terminal to Master: ";
+const String H13 = "</a></li></ul></li></ul></div></nav>";
+const String H14 = "<div class=\"container-fluid text-center\">";
+const String H15 = "<div class=\"jumbotron jumbotron-fluid\" style=\"background-color:#85754d;color:#fff;\"><h1>Smart Doorbell Dashboard</h1></div>";
+const String H16 = "<div class =\"row\"><div class=\"col-sm-4\"><h2 class=\"alert alert-warning\">";
+const String H17 = "&#8457;</h2><h2>Temperature</h2></div>";
+const String H18 = "<div class=\"col-sm-4\"><h2 class=\"alert alert-warning\">";
+const String H19 = "%</h2><h2>Humidity</h2></div>";
+const String H20 = "<div class=\"col-sm-4\"><h2 class=\"alert alert-warning\">";
+const String H21 = "</h2><h2>Rain</h2></div></div>";
+const String H22 = "<div class=\"row\"><div class=\"col-sm-4\"><h2 class=\"alert alert-warning\">";
+const String H23 = " ppm</h2><h2>Smoke</h2></div>";
+const String H24 = "<div class=\"col-sm-4\"><h2 class=\"alert alert-warning\">";
+const String H25 = " mg/m<sup>3</sup></h2><h2>Dust</h2></div>";
+const String H26 = "<div class=\"col-sm-4\"><h2 class=\"alert alert-warning\">";
+const String H27 = "</h2><h2>Light</h2></div></div>";
+const String H28 = "<div class =\"row\"><div class=\"col-sm-4\"><h2 class=\"alert alert-warning\">";
+const String H29 = " ppm</h2><h2>CO</h2></div>";
+const String H30 = "<div class=\"col-sm-4\"><h2 class=\"alert alert-warning\">";
+const String H31 = " ppm</h2><h2>CO2</h2></div><div class=\"col-sm-4\">";
+const String H32 = "<h2 class=\"alert alert-warning\">";
+const String H33 = " ppm</h2><h2>LPG</h2></div></div><hr style=\"border-top: 1px solid #85754d;\">";
+const String H34 = "<p>&copy;2017 Copyright: Pouria &amp; Conard</p><div></body></html>";
 /*******************************************************************************/
 /*******************************************************************************/
 
@@ -292,22 +329,79 @@ void espBoot()
 
 void sendHttpResponse()
 {
-  // HTTP headers always start with a response code (e.g. HTTP/1.1 200 OK)
-  // and a content-type so the client knows what's coming, then a blank line:
-  client.println("HTTP/1.1 200 OK");
-  client.println("Content-type:text/html");
-  client.println();
-
-  // the content of the HTTP response follows the header:
-  client.print("The LED is responding");
-  client.println("<br>");
-  client.println("<br>");
-
-  client.println("Click <a href=\"/H\">here</a> turn the LED on<br>");
-  client.println("Click <a href=\"/L\">here</a> turn the LED off<br>");
-
-  // The HTTP response ends with another blank line:
-  client.println();
+  client.println(H1);
+  client.println(H2);
+  client.println(H3);
+  client.println(H4);
+  client.println(H5);
+  client.println(H6);
+  client.print(H7);
+  client.println(H8);
+  client.print(H9);
+  client.print(syn);
+  client.println(H10);
+  client.print(ack_slave);
+  client.print(H11);
+  client.print(syn_terminal);
+  client.println(H12);
+  client.print(ack_terminal);
+  client.println(H13);
+  client.println(H14);
+  client.println(H15);
+  client.print(H16);
+  client.print(temperature);
+  client.println(H17);
+  client.println(H18);
+  client.print(humidity);
+  client.print(H19);
+  client.print(H20);
+  if (rain == "HVY")
+  {
+    client.print("HEAVY");
+  }
+  else
+  {
+    client.print(rain);
+  }
+  client.println(H21);
+  client.print(H22);
+  client.print(smoke);
+  client.print(H23);
+  client.print(H24);
+  client.print(dust);
+  client.println(H25);
+  client.print(H26);
+  if (light == "DK")
+  {
+    client.print("DARK");
+  }
+  else if (light == "DM")
+  {
+    client.print("DIM");
+  }
+  else if (light == "LT")
+  {
+    client.print("SEMI BRIGHT");
+  }
+  else if (light == "BR")
+  {
+    client.print("BRIGHT");
+  }
+  else if (light == "VB")
+  {
+    client.print("VERY BRIGHT");
+  }
+  client.println(H27);
+  client.println(H28);
+  client.print(co);
+  client.println(H29);
+  client.println(H30);
+  client.print(co2);
+  client.println(H31);
+  client.println(H32);
+  client.print(lpg);
+  client.println(H33);
+  client.println(H34);
 }
 
 void serviceClient()
@@ -332,21 +426,21 @@ void serviceClient()
       // that's the end of the HTTP request, so send a response
       if (buf.endsWith("\r\n\r\n"))
       {
+        syn_terminal++;
+        ack_terminal++;
         sendHttpResponse();
         break;
       }
 
-      /*DEBUGGING PURPOSE ONLY*/
-      // Check to see if the client request was "GET /H" or "GET /L":
-      if (buf.endsWith("GET /H"))
+      if (buf.endsWith("GET / R"))
       {
-        digitalWrite(MOTION_LED, HIGH);   // turn the LED on (HIGH is the voltage level)
+        if (!isRequesting)
+        {
+          isRequesting = true;
+          syn_state = ON_DEMAND;
+          sendSyn();
+        }
       }
-      else if (buf.endsWith("GET /L"))
-      {
-        digitalWrite(MOTION_LED, LOW);    // turn the LED off by making the voltage LOW
-      }
-      /*DEBUGGING PURPOSE ONLY*/
     }
   }
 }
@@ -448,6 +542,7 @@ void clearMsgBuffer()
   is_handshake_completed = false;
   is_syn_sent = false;
   syn_state = LAZY;
+  isRequesting = false;
 }
 
 void checkMsgBuffer()

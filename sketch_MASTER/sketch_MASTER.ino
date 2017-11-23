@@ -50,7 +50,7 @@ const String H1 = "HTTP/1.1 200 OK\nContent-type:text/html\n\n<!DOCTYPE html><ht
 const String H2 = "<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\">";
 const String H3 = "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js\"></script>";
 const String H4 = "<script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>";
-const String H5 = "</head><body style=\"background-color: #4b2e83; color: #b7a57a;\"><nav class=\"navbar navbar-inverse\"><div class=\"container-fluid\">";
+const String H5 = "</head><body style=\"background-color: black; color: #b7a57a;\"><nav class=\"navbar navbar-inverse\"><div class=\"container-fluid\">";
 const String H6 = "<div class=\"navbar-header\"><p class=\"navbar-brand\">Team Optimistic</p></div><ul class=\"nav navbar-nav\">";
 const String H7 = "<li class=\"active\"><a href=\"/R\">Refresh Data</a></li><li class=\"dropdown\"><a class=\"dropdown-toggle\"";
 const String H8 = "data-toggle=\"dropdown\" href=\"#\">Communication<span class=\"caret\"></span></a><ul class=\"dropdown-menu\">";

@@ -37,52 +37,69 @@
 				<h1>Smart Doorbell Dashboard</h1>
 			</div>
 
-			<div class ="row">
+			<div id="weather">
+				<h1></h1>
+				<div class="row">
+					<div class="col-sm-6">
+						<img id="weather-icon">
+					</div>
+					<div class="col-sm-6">
+						<h2 id="date-today"></h2>
+						<br>
+						<h3 id="air-quality">Air Quality: <span></span></h3>
+						<br>
+						<h4 id="status-day"></h4>
+						<h4 id="advice-day"></h4>
+					</div>
+				</div>
+			</div>
+
+			<div class="row">
 				<div class="col-sm-4">
-					<h2 class="alert alert-warning">70&#8457;</h2>
+					<h2 id="temp-value" class="alert alert-warning">33&#8457;</h2>
 					<h2>Temperature</h2>
 				</div>
 
 				<div class="col-sm-4">
-					<h2 class="alert alert-warning">80%</h2>
+					<h2 id="humid-value" class="alert alert-warning">80%</h2>
 					<h2>Humidity</h2>
 				</div>
 
 				<div class="col-sm-4">
-					<h2 class="alert alert-warning">Wet</h2>
+					<h2 id="rain-value" class="alert alert-warning">HEAVY</h2>
 					<h2>Rain</h2>
 				</div>
 			</div>
 
 			<div class="row">
 				<div class="col-sm-4">
-					<h2 class="alert alert-warning">1 ppm</h2>
+					<h2 id="smoke-value" class="alert alert-warning">1 ppm</h2>
 					<h2>Smoke</h2>
 				</div>
 				<div class="col-sm-4">
-					<h2 class="alert alert-warning">0.3 mg/m<sup>3</sup></h2>
+					<h2 id="dust-value" class="alert alert-warning">0.3 mg/m<sup>3</sup></h2>
 					<h2>Dust</h2>
 				</div>
 
 				<div class="col-sm-4">
-					<h2 class="alert alert-warning">Bright</h2>
+					<h2 id="light-value" class="alert alert-warning">BRIGHT</h2>
 					<h2>Light</h2>
 				</div>
 			</div>
 
 			<div class ="row">
 				<div class="col-sm-4">
-					<h2 class="alert alert-warning">5 ppm</h2>
+					<h2 id="co-value" class="alert alert-warning">5 ppm</h2>
 					<h2>CO</h2>
 				</div>
 
 				<div class="col-sm-4">
-					<h2 class="alert alert-warning">500 ppm</h2>
+					<h2 id="co2-value" class="alert alert-warning">500 ppm</h2>
 					<h2>CO2</h2>
 				</div>
 
 				<div class="col-sm-4">
-					<h2 class="alert alert-warning">1 ppm</h2>
+					<h2 id="lpg-value" class="alert alert-warning">1 ppm</h2>
 					<h2>LPG</h2>
 				</div>
 			</div>
@@ -93,6 +110,6 @@
 
 		</div>
 
-
+		<script src="smdb.js"></script>
 	</body>
 	</html>

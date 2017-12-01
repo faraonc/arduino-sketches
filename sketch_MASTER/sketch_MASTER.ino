@@ -4,8 +4,8 @@
 #include <Keypad.h>
 
 /**------------------ WIFI Variables ------------------**/
-const char *SSID     = "Starxf";
-const char *PASSWORD = "Carsomyr";
+const char *SSID     = "Twinkle";
+const char *PASSWORD = "12345678";
 const byte HTTP_PORT = 80;
 const byte ESP_RX = 53;
 const byte ESP_TX = 52;
@@ -307,6 +307,9 @@ void espBoot()
     clearLCDRow(0);
     lcd.setCursor(0, 0);
     lcd.print("Connect: "  );
+    //for demo, comment when using home wifi
+    //lcd.print("CJ's");
+    //for actual home use, uncomment when using home wifi
     lcd.print(SSID);
     // Connect to WPA/WPA2 network
     status = WiFi.begin(SSID, PASSWORD);

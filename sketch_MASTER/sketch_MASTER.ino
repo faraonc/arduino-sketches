@@ -61,25 +61,31 @@ const String H12 = "</a></li><li><a>Terminal to Master: ";
 const String H13 = "</a></li></ul></li></ul></div></nav>";
 const String H14 = "<div class=\"container-fluid text-center\">";
 const String H15 = "<div class=\"jumbotron jumbotron-fluid\" style=\"background-color:#85754d;color:#fff;\"><h1>Smart Doorbell Dashboard</h1></div>";
-const String H16 = "<div class =\"row\"><div class=\"col-sm-4\"><h2 class=\"alert alert-warning\">";
+
+const String J1 = "<div id=\"weather\"><h1></h1><div class=\"row\"><div class=\"col-sm-6\"><img id=\"weather-icon\"></div>";
+const String J2 = "<div class=\"col-sm-6\"><h2 id=\"date-today\"></h2><br><h3 id=\"air-quality\">Air Quality: <span></span></h3><br>";
+const String J3 = "<h4 id=\"status-day\"></h4><h4 id=\"advice-day\"></h4></div></div></div>";
+
+const String H16 = "<div class =\"row\"><div class=\"col-sm-4\"><h2 id=\"temp-value\" class=\"alert alert-warning\">";
 const String H17 = "&#8457;</h2><h2>Temperature</h2></div>";
-const String H18 = "<div class=\"col-sm-4\"><h2 class=\"alert alert-warning\">";
+const String H18 = "<div class=\"col-sm-4\"><h2 id=\"humid-value\" class=\"alert alert-warning\">";
 const String H19 = "%</h2><h2>Humidity</h2></div>";
-const String H20 = "<div class=\"col-sm-4\"><h2 class=\"alert alert-warning\">";
+const String H20 = "<div class=\"col-sm-4\"><h2 id=\"rain-value\" class=\"alert alert-warning\">";
 const String H21 = "</h2><h2>Rain</h2></div></div>";
-const String H22 = "<div class=\"row\"><div class=\"col-sm-4\"><h2 class=\"alert alert-warning\">";
+const String H22 = "<div class=\"row\"><div class=\"col-sm-4\"><h2 id=\"smoke-value\" class=\"alert alert-warning\">";
 const String H23 = " ppm</h2><h2>Smoke</h2></div>";
-const String H24 = "<div class=\"col-sm-4\"><h2 class=\"alert alert-warning\">";
+const String H24 = "<div class=\"col-sm-4\"><h2 id=\"dust-value\" class=\"alert alert-warning\">";
 const String H25 = " mg/m<sup>3</sup></h2><h2>Dust</h2></div>";
-const String H26 = "<div class=\"col-sm-4\"><h2 class=\"alert alert-warning\">";
+const String H26 = "<div class=\"col-sm-4\"><h2 id=\"light-value\" class=\"alert alert-warning\">";
 const String H27 = "</h2><h2>Light</h2></div></div>";
-const String H28 = "<div class =\"row\"><div class=\"col-sm-4\"><h2 class=\"alert alert-warning\">";
+const String H28 = "<div class =\"row\"><div class=\"col-sm-4\"><h2 id=\"co-value\" class=\"alert alert-warning\">";
 const String H29 = " ppm</h2><h2>CO</h2></div>";
-const String H30 = "<div class=\"col-sm-4\"><h2 class=\"alert alert-warning\">";
+const String H30 = "<div class=\"col-sm-4\"><h2 id=\"co2-value\" class=\"alert alert-warning\">";
 const String H31 = " ppm</h2><h2>CO2</h2></div><div class=\"col-sm-4\">";
-const String H32 = "<h2 class=\"alert alert-warning\">";
+const String H32 = "<h2 id=\"lpg-value\" class=\"alert alert-warning\">";
 const String H33 = " ppm</h2><h2>LPG</h2></div></div><hr style=\"border-top: 1px solid #85754d;\">";
-const String H34 = "<p>&copy;2017 Copyright: Pouria &amp; Conard</p><div></body></html>";
+const String H34 = "<p>&copy;2017 Copyright: Pouria &amp; Conard</p><div>";
+const String H35 = "<script src=\"http://students.washington.edu/faraonc/Arduino/webpage/smdb.js\"></script></body></html>";
 /*******************************************************************************/
 /*******************************************************************************/
 
@@ -351,6 +357,9 @@ void sendHttpResponse()
   client.println(H13);
   client.println(H14);
   client.println(H15);
+  client.print(J1);
+  client.print(J2);
+  client.print(J3);
   client.print(H16);
   client.print(temperature);
   client.println(H17);
@@ -405,6 +414,7 @@ void sendHttpResponse()
   client.print(lpg);
   client.println(H33);
   client.println(H34);
+  client.println(H35);
 }
 
 void serviceClient()

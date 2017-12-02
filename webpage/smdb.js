@@ -85,7 +85,7 @@ $( document ).ready(function() {
 	};
 
 	$('#date-today').text(new Date().toString());
-	$('#weather').addClass("text-left img-thumbnail text-center").css("padding", "15px");
+	$('#weather').addClass("text-left img-thumbnail text-center").css("padding", "20px");
 	$('#weather h1').text("Today's Local Forecast");
 	$('#weather-icon').addClass("rounded img-fluid").checkWeather();
 	$('#weather .col-sm-6').css("color", "black");

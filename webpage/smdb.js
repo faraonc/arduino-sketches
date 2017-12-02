@@ -281,7 +281,4 @@ $( document ).ready(function() {
 	$('#co2-value').checkCO2();
 	$('#lpg-value').checkLPG();
 
-
-
-
 });

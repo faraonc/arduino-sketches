@@ -3,8 +3,9 @@
 $( document ).ready(function() {
 
 	$('body').css("background-color", "white").css("color", "b7a57a"); //alt for bg-color black
+	$('body').children().eq(1).css("padding", "0 5% 5% 5%");
 	$('#team').text("Team Optimistic");
-	$('#jumbox').css("background-color", "#85754d").css("color", "#fff");
+	$('#jumbox').css("background-color", "#4b2e83").css("color", "#fff");
 	$('#db-header').text("Smart Doorbell Dashboard");
 	$('hr').css("border-top", "1px solid #85754d");
 	$('#foot').text("\u00a9 2017 Copyright: Pouria & Conard");

@@ -5,7 +5,7 @@
 <html>
 <head>
 	<title>Smart Doorbell Dashboard</title>
-
+	<meta charset="utf-8">
 	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css">
 	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js"></script>
 	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js"></script>
@@ -18,10 +18,10 @@
 				<p id="team" class="navbar-brand"></p>
 			</div>
 			<ul class="nav navbar-nav">
-				<li class="active"><a href=\"/H\">Refresh Data</a></li>
+				<li class="active"><a href="/R">Refresh Data</a></li>
+				<li> <a href="/U" id="blink">No Motion</a></li>
 				<li class="dropdown">
-					<a class="dropdown-toggle" data-toggle="dropdown" href="#">Communication
-						<span class="caret"></span></a>
+					<a class="dropdown-toggle" data-toggle="dropdown" href="#">Communication<span class="caret"></span></a>
 						<ul class="dropdown-menu">
 							<li><a>Master to Slave: 5</a></li>
 							<li><a>Slave to Master: 4</a></li>
@@ -58,12 +58,12 @@
 			<div class="row">
 				<div class="col-sm-4">
 					<h2>Temperature</h2>
-					<h2 id="temp-value">100&#8457;</h2>
+					<h2 id="temp-value">95&#8457;</h2>
 				</div>
 
 				<div class="col-sm-4">
 					<h2>Humidity</h2>
-					<h2 id="humid-value">80%</h2>
+					<h2 id="humid-value">50%</h2>
 				</div>
 
 				<div class="col-sm-4">
@@ -84,19 +84,19 @@
 
 				<div class="col-sm-4">
 					<h2>Light</h2>
-					<h2 id="light-value">VERY BRIGHT</h2>
+					<h2 id="light-value">SEMI BRIGHT</h2>
 				</div>
 			</div>
 
 			<div class ="row">
 				<div class="col-sm-4">
 					<h2>CO</h2>
-					<h2 id="co-value">5 ppm</h2>
+					<h2 id="co-value">3 ppm</h2>
 				</div>
 
 				<div class="col-sm-4">
 					<h2>CO2</h2>
-					<h2 id="co2-value">5000 ppm</h2>
+					<h2 id="co2-value">2000 ppm</h2>
 				</div>
 
 				<div class="col-sm-4">
@@ -111,7 +111,7 @@
 
 		</div>
 
-		<!-- <script src="smdb.js"></script> -->
-		<script src="http://students.washington.edu/faraonc/Arduino/webpage/smdb.js"></script>
+		<script src="smdb.js"></script>
+		<!-- <script src="http://students.washington.edu/faraonc/Arduino/webpage/smdb.js"></script> -->
 	</body>
 	</html>

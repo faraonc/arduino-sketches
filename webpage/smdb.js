@@ -10,9 +10,10 @@ $( document ).ready(function() {
 	$('hr').css("border-top", "1px solid #85754d");
 	$('#foot').text("\u00a9 2017 Copyright: Pouria & Conard");
 	$('.col-sm-4:nth-child(1)').css("color", "black"); //alt #a6a6a6
-	$('.col-sm-4:nth-child(2)').css("color", "#black");
-	$('.col-sm-4:nth-child(3)').css("color", "#black");
+	$('.col-sm-4:nth-child(2)').css("color", "black");
+	$('.col-sm-4:nth-child(3)').css("color", "black");
 
+	// Messages for the user based on the weather
 	function Broadcast(status, advice){
 		this.status = status;
 		this.advice = advice;
@@ -30,13 +31,14 @@ $( document ).ready(function() {
 
 	var broadcasts = [];
 	broadcasts[advices.CLOUDY] = new Broadcast("The sun is hiding behind clouds.", "Smile on a cloudy day.");
-	broadcasts[advices.CLOUDY_SUNNY] = new Broadcast("Behind the clouds the sun is shining.", "Get sunshine on a cloudy day.");
+	broadcasts[advices.CLOUDY_SUNNY] = new Broadcast("Behind clouds the sun is shining.", "Get sunshine on a cloudy day.");
 	broadcasts[advices.SUNNY] = new Broadcast("Sun came out to play.", "Don't forget your sunscreen.");
 	broadcasts[advices.NIGHT] = new Broadcast("It is just dark out there.", "Turn your lights on, please.");
 	broadcasts[advices.SNOW] = new Broadcast("Those snowy days.", "Stay warm!");
 	broadcasts[advices.RAIN] = new Broadcast("Rain, rain go away.", "Bring your raincoat.");
 	broadcasts[advices.DEFAULT] = new Broadcast("Monkeys are working.", "Don't disturb the monkeys.");
 
+	// Checks the weather condition outside and loads the appropriate picture
 	$.fn.checkWeather = function() {
 
 		var temp = parseInt($('#temp-value').text());
@@ -85,6 +87,7 @@ $( document ).ready(function() {
 		var lpg = parseInt($('#lpg-value').text());
 		var smoke = parseInt($('#smoke-value').text());
 
+		// determine if the air quality is safe
 		if(co >= 50 || co2 >= 3000 || dust >= 0.5 || lpg >= 1000 || smoke >= 400)
 		{
 			this.css("color", "red").text("UNSAFE");
@@ -135,16 +138,15 @@ $( document ).ready(function() {
 	}
 
 	$.fn.checkTemp = function() {
-
 		var temp = parseInt(this.text());
 
-		if(temp <= 20){
+		if(temp <= 25){
 			this.addClass("alert alert-danger");
 
-		} else if(temp >= 100){
+		} else if(temp >= 90){
 			this.addClass("alert alert-danger");
 		}
-		else if(temp >= 80){
+		else if(temp >= 70){
 			this.addClass("alert alert-warning");
 
 		}else if(temp >= 55){
@@ -152,21 +154,19 @@ $( document ).ready(function() {
 
 		}else{
 			this.addClass("alert alert-info");
-
 		}
 	};
 
 	$.fn.checkHumid = function() {
+		var humid = parseInt(this.text());
 
-		var temp = parseInt(this.text());
-
-		if(temp <= 10){
+		if(humid <= 5){
 			this.addClass("alert alert-danger");
 
-		} else if(temp >= 90){
+		} else if(humid >= 95){
 			this.addClass("alert alert-warning");
 		}
-		else if(temp >= 50){
+		else if(humid >= 50){
 			this.addClass("alert alert-success");
 
 		}else{
@@ -175,10 +175,9 @@ $( document ).ready(function() {
 	};
 
 	$.fn.checkDust = function() {
-
 		var dust = parseFloat(this.text());
 
-		if(dust >= 1.0){
+		if(dust >= 0.7){
 			this.addClass("alert alert-danger");
 
 		} else if(dust >= 0.4){
@@ -193,7 +192,6 @@ $( document ).ready(function() {
 	};
 
 	$.fn.checkSmoke = function() {
-
 		var smoke = parseInt(this.text());
 
 		if(smoke >= 300){
@@ -211,7 +209,6 @@ $( document ).ready(function() {
 	};
 
 	$.fn.checkCO = function() {
-
 		var co = parseInt(this.text());
 
 		if(co >= 50){
@@ -229,7 +226,6 @@ $( document ).ready(function() {
 	};
 
 	$.fn.checkCO2 = function() {
-
 		var co2 = parseInt(this.text());
 
 		if(co2 >= 3000){
@@ -247,7 +243,6 @@ $( document ).ready(function() {
 	};
 
 	$.fn.checkLPG = function() {
-
 		var lpg = parseInt(this.text());
 
 		if(lpg >= 700){
@@ -264,12 +259,37 @@ $( document ).ready(function() {
 		}
 	};
 
+	$.fn.checkMotion = function() {
+		switch(this.text()){
+			case "Motion Detected":{
+				this.css("background-color", "red");
+				break;
+			}
+			case "No Motion":{
+				this.css("background-color", "green");
+			}
+			
+		}
+	}
+
 	$('#date-today').text(new Date().toString());
 	$('#weather').addClass("text-left img-thumbnail text-center").css("padding", "20px");
 	$('#weather h1').text("Today's Local Forecast");
 	$('#weather-icon').addClass("rounded img-fluid").checkWeather();
 	$('#weather .col-sm-6').css("color", "black");
+
+	// update the time every sec
 	setInterval(function(){$('#date-today').text(new Date().toString());}, 1000);
+
+	$('#blink').css("color", "white").checkMotion();
+
+	// blinks the motion detection link
+	function blinker() {
+		$('#blink').fadeOut(500);
+		$('#blink').fadeIn(500);
+	}
+	setInterval(blinker, 1500); //Runs every second
+
 	$('#air-quality span').checkAirQuality();
 	$('#light-value').checkLight();
 	$('#rain-value').checkRain();
@@ -280,5 +300,5 @@ $( document ).ready(function() {
 	$('#co-value').checkCO();
 	$('#co2-value').checkCO2();
 	$('#lpg-value').checkLPG();
-
+	
 });

@@ -1,4 +1,16 @@
+// Smart Doorbell Javascript DOM Manipulation
+
 $( document ).ready(function() {
+
+	$('body').css("background-color", "white").css("color", "b7a57a"); //alt for bg-color black
+	$('#team').text("Team Optimistic");
+	$('#jumbox').css("background-color", "#85754d").css("color", "#fff");
+	$('#db-header').text("Smart Doorbell Dashboard");
+	$('hr').css("border-top", "1px solid #85754d");
+	$('#foot').text("\u00a9 2017 Copyright: Pouria & Conard");
+	$('.col-sm-4:nth-child(1)').css("color", "black"); //alt #a6a6a6
+	$('.col-sm-4:nth-child(2)').css("color", "#black");
+	$('.col-sm-4:nth-child(3)').css("color", "#black");
 
 	function Broadcast(status, advice){
 		this.status = status;
@@ -24,7 +36,6 @@ $( document ).ready(function() {
 	broadcasts[advices.RAIN] = new Broadcast("Rain, rain go away.", "Bring your raincoat.");
 	broadcasts[advices.DEFAULT] = new Broadcast("Monkeys are working.", "Don't disturb the monkeys.");
 
-
 	$.fn.checkWeather = function() {
 
 		var temp = parseInt($('#temp-value').text());
@@ -44,7 +55,7 @@ $( document ).ready(function() {
 			$('#status-day').text(broadcasts[advices.SUNNY].status);
 			$('#advice-day').text(broadcasts[advices.SUNNY].advice);
 
-		}else if($('#light-value').text() === "DARK" && $('#rain-value').text() === "DRY"){
+		}else if(($('#light-value').text() === "DARK" || $('#light-value').text() === "DIM") && $('#rain-value').text() === "DRY"){
 			this.attr("src", "http://students.washington.edu/faraonc/Arduino/webpage/images/night.svg");
 			$('#status-day').text(broadcasts[advices.NIGHT].status);
 			$('#advice-day').text(broadcasts[advices.NIGHT].advice);
@@ -64,10 +75,9 @@ $( document ).ready(function() {
 			$('#status-day').text(broadcasts[advices.DEFAULT].status);
 			$('#advice-day').text(broadcasts[advices.DEFAULT].advice);
 		}
-
 	};
 
-	$.fn.checkAir = function() {
+	$.fn.checkAirQuality = function() {
 		var co = parseInt($('#co-value').text());
 		var co2 = parseInt($('#co2-value').text());
 		var dust = parseFloat($('#dust-value').text());
@@ -80,8 +90,177 @@ $( document ).ready(function() {
 		}else{
 			this.css("color", "green").text("SAFE");
 		}
+	};
 
+	$.fn.checkLight = function(){
+		switch(this.text()){
+			case "DARK":{
+				this.addClass("alert alert-danger");
+				break;
+			}
+			case "DIM":{
+				this.addClass("alert alert-info");
+				break;
+			}
+			case "SEMI BRIGHT":{
+				this.addClass("alert alert-success");
+				break;
+			}
+			case "BRIGHT":{
+				this.addClass("alert alert-warning");
+				break;
+			}
+			case "VERY BRIGHT":{
+				this.addClass("alert alert-danger");
+				
+			}
+		}
+	}
 
+	$.fn.checkRain = function(){
+		switch(this.text()){
+			case "HEAVY":{
+				this.addClass("alert alert-danger");
+				break;
+			}
+			case "WET":{
+				this.addClass("alert alert-warning");
+				break;
+			}
+			case "DRY":{
+				this.addClass("alert alert-info");
+			}
+		}
+	}
+
+	$.fn.checkTemp = function() {
+
+		var temp = parseInt(this.text());
+
+		if(temp <= 20){
+			this.addClass("alert alert-danger");
+
+		} else if(temp >= 100){
+			this.addClass("alert alert-danger");
+		}
+		else if(temp >= 80){
+			this.addClass("alert alert-warning");
+
+		}else if(temp >= 55){
+			this.addClass("alert alert-success");
+
+		}else{
+			this.addClass("alert alert-info");
+
+		}
+	};
+
+	$.fn.checkHumid = function() {
+
+		var temp = parseInt(this.text());
+
+		if(temp <= 10){
+			this.addClass("alert alert-danger");
+
+		} else if(temp >= 90){
+			this.addClass("alert alert-warning");
+		}
+		else if(temp >= 50){
+			this.addClass("alert alert-success");
+
+		}else{
+			this.addClass("alert alert-info");
+		}
+	};
+
+	$.fn.checkDust = function() {
+
+		var dust = parseFloat(this.text());
+
+		if(dust >= 1.0){
+			this.addClass("alert alert-danger");
+
+		} else if(dust >= 0.4){
+			this.addClass("alert alert-warning");
+		}
+		else if(dust >= 0.2){
+			this.addClass("alert alert-success");
+
+		}else{
+			this.addClass("alert alert-info");
+		}
+	};
+
+	$.fn.checkSmoke = function() {
+
+		var smoke = parseInt(this.text());
+
+		if(smoke >= 300){
+			this.addClass("alert alert-danger");
+
+		} else if(smoke >= 100){
+			this.addClass("alert alert-warning");
+		}
+		else if(smoke >= 50){
+			this.addClass("alert alert-success");
+
+		}else{
+			this.addClass("alert alert-info");
+		}
+	};
+
+	$.fn.checkCO = function() {
+
+		var co = parseInt(this.text());
+
+		if(co >= 50){
+			this.addClass("alert alert-danger");
+
+		} else if(co >= 20){
+			this.addClass("alert alert-warning");
+		}
+		else if(co >= 10){
+			this.addClass("alert alert-success");
+
+		}else{
+			this.addClass("alert alert-info");
+		}
+	};
+
+	$.fn.checkCO2 = function() {
+
+		var co2 = parseInt(this.text());
+
+		if(co2 >= 3000){
+			this.addClass("alert alert-danger");
+
+		} else if(co2 >= 2000){
+			this.addClass("alert alert-warning");
+		}
+		else if(co2 >= 1000){
+			this.addClass("alert alert-success");
+
+		}else{
+			this.addClass("alert alert-info");
+		}
+	};
+
+	$.fn.checkLPG = function() {
+
+		var lpg = parseInt(this.text());
+
+		if(lpg >= 700){
+			this.addClass("alert alert-danger");
+
+		} else if(lpg >= 500){
+			this.addClass("alert alert-warning");
+		}
+		else if(lpg >= 50){
+			this.addClass("alert alert-success");
+
+		}else{
+			this.addClass("alert alert-info");
+		}
 	};
 
 	$('#date-today').text(new Date().toString());
@@ -90,7 +269,17 @@ $( document ).ready(function() {
 	$('#weather-icon').addClass("rounded img-fluid").checkWeather();
 	$('#weather .col-sm-6').css("color", "black");
 	setInterval(function(){$('#date-today').text(new Date().toString());}, 1000);
-	$('#air-quality span').checkAir();
+	$('#air-quality span').checkAirQuality();
+	$('#light-value').checkLight();
+	$('#rain-value').checkRain();
+	$('#temp-value').checkTemp();
+	$('#humid-value').checkHumid();
+	$('#dust-value').checkDust();
+	$('#smoke-value').checkSmoke();
+	$('#co-value').checkCO();
+	$('#co2-value').checkCO2();
+	$('#lpg-value').checkLPG();
+
 
 
 

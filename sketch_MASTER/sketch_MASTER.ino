@@ -50,8 +50,8 @@ const String H1 = "HTTP/1.1 200 OK\nContent-type:text/html\n\n<!DOCTYPE html><ht
 const String H2 = "<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\">";
 const String H3 = "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js\"></script>";
 const String H4 = "<script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>";
-const String H5 = "</head><body style=\"background-color: black; color: #b7a57a;\"><nav class=\"navbar navbar-inverse\"><div class=\"container-fluid\">";
-const String H6 = "<div class=\"navbar-header\"><p class=\"navbar-brand\">Team Optimistic</p></div><ul class=\"nav navbar-nav\">";
+const String H5 = "</head><body><nav class=\"navbar navbar-inverse\"><div class=\"container-fluid\">";
+const String H6 = "<div class=\"navbar-header\"><p id=\"team\" class=\"navbar-brand\"></p></div><ul class=\"nav navbar-nav\">";
 const String H7 = "<li class=\"active\"><a href=\"/R\">Refresh Data</a></li><li class=\"dropdown\"><a class=\"dropdown-toggle\"";
 const String H8 = "data-toggle=\"dropdown\" href=\"#\">Communication<span class=\"caret\"></span></a><ul class=\"dropdown-menu\">";
 const String H9 = "<li><a>Master to Slave: ";
@@ -60,32 +60,38 @@ const String H11 = "</a></li><li><a>Master to Terminal: ";
 const String H12 = "</a></li><li><a>Terminal to Master: ";
 const String H13 = "</a></li></ul></li></ul></div></nav>";
 const String H14 = "<div class=\"container-fluid text-center\">";
-const String H15 = "<div class=\"jumbotron jumbotron-fluid\" style=\"background-color:#85754d;color:#fff;\"><h1>Smart Doorbell Dashboard</h1></div>";
+const String H15 = "<div id=\"jumbox\" class=\"jumbotron jumbotron-fluid\"><h1 id=\"db-header\"></h1></div>";
 
 const String J1 = "<div id=\"weather\"><h1></h1><div class=\"row\"><div class=\"col-sm-6\"><img id=\"weather-icon\"></div>";
 const String J2 = "<div class=\"col-sm-6\"><h2 id=\"date-today\"></h2><br><h3 id=\"air-quality\">Air Quality: <span></span></h3><br>";
-const String J3 = "<h4 id=\"status-day\"></h4><h4 id=\"advice-day\"></h4></div></div></div>";
+const String J3 = "<h4 id=\"status-day\"></h4><h4 id=\"advice-day\"></h4></div></div></div><br><br>";
 
-const String H16 = "<div class =\"row\"><div class=\"col-sm-4\"><h2 id=\"temp-value\" class=\"alert alert-warning\">";
-const String H17 = "&#8457;</h2><h2>Temperature</h2></div>";
-const String H18 = "<div class=\"col-sm-4\"><h2 id=\"humid-value\" class=\"alert alert-warning\">";
-const String H19 = "%</h2><h2>Humidity</h2></div>";
-const String H20 = "<div class=\"col-sm-4\"><h2 id=\"rain-value\" class=\"alert alert-warning\">";
-const String H21 = "</h2><h2>Rain</h2></div></div>";
-const String H22 = "<div class=\"row\"><div class=\"col-sm-4\"><h2 id=\"smoke-value\" class=\"alert alert-warning\">";
-const String H23 = " ppm</h2><h2>Smoke</h2></div>";
-const String H24 = "<div class=\"col-sm-4\"><h2 id=\"dust-value\" class=\"alert alert-warning\">";
-const String H25 = " mg/m<sup>3</sup></h2><h2>Dust</h2></div>";
-const String H26 = "<div class=\"col-sm-4\"><h2 id=\"light-value\" class=\"alert alert-warning\">";
-const String H27 = "</h2><h2>Light</h2></div></div>";
-const String H28 = "<div class =\"row\"><div class=\"col-sm-4\"><h2 id=\"co-value\" class=\"alert alert-warning\">";
-const String H29 = " ppm</h2><h2>CO</h2></div>";
-const String H30 = "<div class=\"col-sm-4\"><h2 id=\"co2-value\" class=\"alert alert-warning\">";
-const String H31 = " ppm</h2><h2>CO2</h2></div><div class=\"col-sm-4\">";
-const String H32 = "<h2 id=\"lpg-value\" class=\"alert alert-warning\">";
-const String H33 = " ppm</h2><h2>LPG</h2></div></div><hr style=\"border-top: 1px solid #85754d;\">";
-const String H34 = "<p>&copy;2017 Copyright: Pouria &amp; Conard</p><div>";
-const String H35 = "<script src=\"http://students.washington.edu/faraonc/Arduino/webpage/smdb.js\"></script></body></html>";
+const String H16 = "<div class =\"row\"><div class=\"col-sm-4\"><h2>Temperature</h2><h2 id=\"temp-value\">";
+
+const String H17 = "&#8457;</h2></div><div class=\"col-sm-4\"><h2>Humidity</h2><h2 id=\"humid-value\">";
+
+const String H18 = "%</h2></div><div class=\"col-sm-4\"><h2>Rain</h2><h2 id=\"rain-value\">";
+
+const String H19 = "</h2></div></div>";
+const String H20 = "<div class=\"row\"><div class=\"col-sm-4\"><h2>Smoke</h2><h2 id=\"smoke-value\">";
+
+const String H21 = " ppm</h2></div>";
+const String H22 = "<div class=\"col-sm-4\"><h2>Dust</h2><h2 id=\"dust-value\">";
+
+const String H23 = " mg/m<sup>3</sup></h2></div>";
+const String H24 = "<div class=\"col-sm-4\"><h2>Light</h2><h2 id=\"light-value\">";
+
+const String H25 = "</h2></div></div>";
+const String H26 = "<div class =\"row\"><div class=\"col-sm-4\"><h2>CO</h2><h2 id=\"co-value\">";
+
+const String H27 = " ppm</h2></div>";
+const String H28 = "<div class=\"col-sm-4\"><h2>CO2</h2><h2 id=\"co2-value\">";
+
+const String H29 = " ppm</h2></div><div class=\"col-sm-4\">";
+const String H30 = "<h2>LPG</h2><h2 id=\"lpg-value\">";
+
+const String H31 = " ppm</h2></div></div><hr><p id=\"foot\"></p><div>";
+const String H32 = "<script src=\"http://students.washington.edu/faraonc/Arduino/webpage/smdb.js\"></script></body></html>";
 /*******************************************************************************/
 /*******************************************************************************/
 
@@ -338,35 +344,33 @@ void espBoot()
 
 void sendHttpResponse()
 {
-  client.println(H1);
-  client.println(H2);
-  client.println(H3);
-  client.println(H4);
-  client.println(H5);
-  client.println(H6);
+  client.print(H1);
+  client.print(H2);
+  client.print(H3);
+  client.print(H4);
+  client.print(H5);
+  client.print(H6);
   client.print(H7);
-  client.println(H8);
+  client.print(H8);
   client.print(H9);
   client.print(syn);
-  client.println(H10);
+  client.print(H10);
   client.print(ack_slave);
   client.print(H11);
   client.print(syn_terminal);
-  client.println(H12);
+  client.print(H12);
   client.print(ack_terminal);
-  client.println(H13);
-  client.println(H14);
-  client.println(H15);
+  client.print(H13);
+  client.print(H14);
+  client.print(H15);
   client.print(J1);
   client.print(J2);
   client.print(J3);
   client.print(H16);
   client.print(temperature);
-  client.println(H17);
-  client.println(H18);
+  client.print(H17);
   client.print(humidity);
-  client.print(H19);
-  client.print(H20);
+  client.print(H18);
   if (rain == "HVY")
   {
     client.print("HEAVY");
@@ -375,14 +379,14 @@ void sendHttpResponse()
   {
     client.print(rain);
   }
-  client.println(H21);
-  client.print(H22);
+  client.print(H19);
+  client.print(H20);
   client.print(smoke);
+  client.print(H21);
+  client.print(H22);
+  client.print(dust);
   client.print(H23);
   client.print(H24);
-  client.print(dust);
-  client.println(H25);
-  client.print(H26);
   if (light == "DK")
   {
     client.print("DARK");
@@ -403,18 +407,17 @@ void sendHttpResponse()
   {
     client.print("VERY BRIGHT");
   }
-  client.println(H27);
-  client.println(H28);
+  client.print(H25);
+  client.print(H26);
   client.print(co);
-  client.println(H29);
-  client.println(H30);
+  client.print(H27);
+  client.print(H28);
   client.print(co2);
-  client.println(H31);
-  client.println(H32);
+  client.print(H29);
+  client.print(H30);
   client.print(lpg);
-  client.println(H33);
-  client.println(H34);
-  client.println(H35);
+  client.print(H31);
+  client.print(H32);
 }
 
 void serviceClient()

@@ -281,7 +281,7 @@ $( document ).ready(function() {
 	// update the time every sec
 	setInterval(function(){$('#date-today').text(new Date().toString());}, 1000);
 
-	$('#blink').css("color", "white").checkMotion();
+	$('#blink').attr("title", "Click to reset motion detection.").css("color", "white").checkMotion();
 
 	// blinks the motion detection link
 	function blinker() {

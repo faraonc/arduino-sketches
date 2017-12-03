@@ -4,8 +4,8 @@
 #include <Keypad.h>
 
 /**------------------ WIFI Variables ------------------**/
-const char *SSID     = "Twinkle";
-const char *PASSWORD = "12345678";
+const char *SSID     = "Starxf";
+const char *PASSWORD = "Carsomyr";
 const byte HTTP_PORT = 80;
 const byte ESP_RX = 53;
 const byte ESP_TX = 52;
@@ -146,8 +146,8 @@ const int BUZZER_DELAY = 250;
 /*******************************************************************************/
 
 /**------------------ Display variables ------------------**/
-String light = "", rain = "", temperature = "", humidity = "", lpg = "", co = "", co2 = "", smoke = "", dust = "";
-bool isMotionDected = false;
+String light = " ", rain = " ", temperature = "", humidity = "", lpg = "", co = "", co2 = "", smoke = "", dust = "";
+bool isMotionDetected = false;
 
 /*******************************************************************************/
 /*******************************************************************************/
@@ -353,7 +353,7 @@ void sendHttpResponse()
 	client.print(H5);
 	client.print(H6);
 	client.print(H7);
-	if(isMotionDected)
+	if(isMotionDetected)
 	{
 		client.print("Motion Detected");
 	}
@@ -458,7 +458,7 @@ void serviceClient()
 				break;
 			}
 
-			if (buf.endsWith("GET / R"))
+			if (buf.endsWith("GET /R"))
 			{
 				if (!isRequesting)
 				{
@@ -467,10 +467,14 @@ void serviceClient()
 					sendSyn();
 				}
 			}
-			else if(buf.endsWith("GET / U"))
+			
+			if(buf.endsWith("GET /U"))
 			{
-				isMotionDected = false;
-				digitalWrite(MOTION_LED, LOW);
+        if(isMotionDetected)
+        {
+				  isMotionDetected = false;
+				  digitalWrite(MOTION_LED, LOW);
+        }
 			}
 		}
 	}
@@ -516,7 +520,7 @@ void buzz()
 
 void detectedMotion()
 {
-	isMotionDected = true;
+	isMotionDetected = true;
 	digitalWrite(MOTION_LED, HIGH);
 }
 
@@ -529,8 +533,11 @@ void checkKeypad()
 		switch (key)
 		{
 			case '*':
-				isMotionDected = false;
-				digitalWrite(MOTION_LED, LOW);
+        if(isMotionDetected)
+        {
+				  isMotionDetected = false;
+				  digitalWrite(MOTION_LED, LOW);
+        }
 				break;
 
 			case '1':

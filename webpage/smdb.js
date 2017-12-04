@@ -300,5 +300,34 @@ $( document ).ready(function() {
 	$('#co-value').checkCO();
 	$('#co2-value').checkCO2();
 	$('#lpg-value').checkLPG();
+
+	function updateStates(){
+		var nocache = "&nocache" + Math.random() * 1000000;
+		var request = new XMLHttpRequest();
+		request.onreadystatechange = function(){
+			if (this.readyState == 4 && this.status == 200) {
+				if(this.responseText != null){
+					console.log(this.responseText);
+				}
+
+			}
+		}
+		request.open("GET", "ajax_switch" + nocache, true);
+		request.send();
+	}
+
+	setInterval(updateStates, 10000);
 	
 });
+
+
+
+
+
+
+
+
+
+
+
+

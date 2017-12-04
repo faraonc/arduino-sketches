@@ -4,8 +4,8 @@
 #include <Keypad.h>
 
 /**------------------ WIFI Variables ------------------**/
-const char *SSID     = "Starxf";
-const char *PASSWORD = "Carsomyr";
+const char *SSID     = "Conard James's iPhone";
+const char *PASSWORD = "12345678";
 const byte HTTP_PORT = 80;
 const byte ESP_RX = 53;
 const byte ESP_TX = 52;
@@ -21,8 +21,13 @@ WiFiEspClient client;
 RingBuffer buf(8);
 int status = WL_IDLE_STATUS;
 
-unsigned int ack_slave = 0;
+unsigned int syn_slave_payload = 0;
+unsigned int syn_slave = 0;
+unsigned int ack_from_slave_to_master = 0;
 unsigned int syn = 0;
+
+unsigned int syn_master_payload = 0;
+unsigned int ack_from_master_to_slave = 0;
 unsigned int ack_terminal = 0;
 unsigned int syn_terminal = 0;
 
@@ -38,15 +43,16 @@ const int MSG_BUFFER_TIMEOUT = 2000;
 
 enum
 {
-	LAZY,
-	ENGLISH,
-	SPANISH,
-	GUEST_ACK,
-	ON_DEMAND
+  LAZY,
+  ENGLISH,
+  SPANISH,
+  GUEST_ACK,
+  ON_DEMAND
 };
 byte syn_state = LAZY;
 
-const String H1 = "HTTP/1.1 200 OK\nContent-type:text/html\n\n<!DOCTYPE html><html><head><meta charset=\"utf-8\">";
+const String H0 = "HTTP/1.1 200 OK\nContent-type:text/html";
+const String H1 = "\n\n<!DOCTYPE html><html><head><meta charset=\"utf-8\">";
 const String H2 = "<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\">";
 const String H3 = "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js\"></script>";
 const String H4 = "<script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>";
@@ -100,10 +106,10 @@ const String H32 = "<script src=\"http://students.washington.edu/faraonc/Arduino
 const byte ROWS = 4; //four rows
 const byte COLS = 3; //three columns
 char keys[ROWS][COLS] = {
-	{'1', '2', '3'},
-	{'4', '5', '6'},
-	{'7', '8', '9'},
-	{'*', '0', '#'}
+  {'1', '2', '3'},
+  {'4', '5', '6'},
+  {'7', '8', '9'},
+  {'*', '0', '#'}
 };
 
 //connect to the row pinouts of the keypad
@@ -121,15 +127,15 @@ const int RS = 12, EN = 11, D4 = 5, D5 = 4, D6 = 3, D7 = 2;
 const byte LED_COL = 20;
 LiquidCrystal lcd(RS, EN, D4, D5, D6, D7);
 enum {
-	CO,
-	CO2,
-	S,
-	LPG,
-	T,
-	H,
-	DT,
-	LT,
-	RN
+  CO,
+  CO2,
+  S,
+  LPG,
+  T,
+  H,
+  DT,
+  LT,
+  RN
 };
 /*******************************************************************************/
 /*******************************************************************************/
@@ -155,678 +161,736 @@ bool isMotionDetected = false;
 
 void clearLCDRow(byte row)
 {
-	lcd.setCursor(0, row);
-	for (byte i = 0; i < LED_COL; i++)
-	{
-		lcd.print(" ");
-	}
+  lcd.setCursor(0, row);
+  for (byte i = 0; i < LED_COL; i++)
+  {
+    lcd.print(" ");
+  }
 }
 
 void lcdPrint(int field, String data)
 {
-	switch (field)
-	{
-		case (CO):
-			lcd.setCursor(3, 1);
-			lcd.print("   ");
-			lcd.setCursor(3, 1);
-			lcd.print(data);
-			break;
-		case (CO2):
-			lcd.setCursor(10, 1);
-			lcd.print("    ");
-			lcd.setCursor(10, 1);
-			lcd.print(data);
-			break;
-		case (S):
-			lcd.setCursor(17, 1);
-			lcd.print("   ");
-			lcd.setCursor(17, 1);
-			lcd.print(data);
-			break;
-		case (LPG):
-			lcd.setCursor(4, 2);
-			lcd.print("    ");
-			lcd.setCursor(4, 2);
-			lcd.print(data);
-			break;
-		case (T):
-			lcd.setCursor(11, 2);
-			lcd.print("   ");
-			lcd.setCursor(11, 2);
-			lcd.print(data);
-			break;
-		case (H):
-			lcd.setCursor(17, 2);
-			lcd.print("   ");
-			lcd.setCursor(17, 2);
-			lcd.print(data);
-			break;
-		case (DT):
-			lcd.setCursor(3, 3);
-			lcd.print("    ");
-			lcd.setCursor(3, 3);
-			lcd.print(data);
-			break;
-		case (LT):
-			lcd.setCursor(11, 3);
-			lcd.print("  ");
-			lcd.setCursor(11, 3);
-			lcd.print(data);
-			break;
-		case (RN):
-			lcd.setCursor(17, 3);
-			lcd.print("   ");
-			lcd.setCursor(17, 3);
-			lcd.print(data);
-	}
+  switch (field)
+  {
+    case (CO):
+      lcd.setCursor(3, 1);
+      lcd.print("   ");
+      lcd.setCursor(3, 1);
+      lcd.print(data);
+      break;
+    case (CO2):
+      lcd.setCursor(10, 1);
+      lcd.print("    ");
+      lcd.setCursor(10, 1);
+      lcd.print(data);
+      break;
+    case (S):
+      lcd.setCursor(17, 1);
+      lcd.print("   ");
+      lcd.setCursor(17, 1);
+      lcd.print(data);
+      break;
+    case (LPG):
+      lcd.setCursor(4, 2);
+      lcd.print("    ");
+      lcd.setCursor(4, 2);
+      lcd.print(data);
+      break;
+    case (T):
+      lcd.setCursor(11, 2);
+      lcd.print("   ");
+      lcd.setCursor(11, 2);
+      lcd.print(data);
+      break;
+    case (H):
+      lcd.setCursor(17, 2);
+      lcd.print("   ");
+      lcd.setCursor(17, 2);
+      lcd.print(data);
+      break;
+    case (DT):
+      lcd.setCursor(3, 3);
+      lcd.print("    ");
+      lcd.setCursor(3, 3);
+      lcd.print(data);
+      break;
+    case (LT):
+      lcd.setCursor(11, 3);
+      lcd.print("  ");
+      lcd.setCursor(11, 3);
+      lcd.print(data);
+      break;
+    case (RN):
+      lcd.setCursor(17, 3);
+      lcd.print("   ");
+      lcd.setCursor(17, 3);
+      lcd.print(data);
+  }
 }
 
 void lcdDisplay()
 {
-	lcdPrint(CO, co);
-	lcdPrint(CO2, co2);
-	lcdPrint(S, smoke);
-	lcdPrint(LPG, lpg);
-	lcdPrint(T, temperature);
-	lcdPrint(H, humidity);
-	lcdPrint(DT, dust);
-	lcdPrint(LT, light);
-	lcdPrint(RN, rain);
+  lcdPrint(CO, co);
+  lcdPrint(CO2, co2);
+  lcdPrint(S, smoke);
+  lcdPrint(LPG, lpg);
+  lcdPrint(T, temperature);
+  lcdPrint(H, humidity);
+  lcdPrint(DT, dust);
+  lcdPrint(LT, light);
+  lcdPrint(RN, rain);
 }
 
 void lcdBoot()
 {
-	// set up the LCD's number of columns and rows:
-	lcd.begin(20, 4);
-	lcd.setCursor(0, 1);
-	lcd.print("CO:");
-	lcd.setCursor(7, 1);
-	lcd.print("C2:");
-	lcd.setCursor(15, 1);
-	lcd.print("S:");
-	lcd.setCursor(0, 2);
-	lcd.print("LPG:");
-	lcd.setCursor(9, 2);
-	lcd.print("T:");
-	lcd.setCursor(15, 2);
-	lcd.print("H:");
-	lcd.setCursor(0, 3);
-	lcd.print("DT:");
-	lcd.setCursor(8, 3);
-	lcd.print("LT:");
-	lcd.setCursor(14, 3);
-	lcd.print("RN:");
+  // set up the LCD's number of columns and rows:
+  lcd.begin(20, 4);
+  lcd.setCursor(0, 1);
+  lcd.print("CO:");
+  lcd.setCursor(7, 1);
+  lcd.print("C2:");
+  lcd.setCursor(15, 1);
+  lcd.print("S:");
+  lcd.setCursor(0, 2);
+  lcd.print("LPG:");
+  lcd.setCursor(9, 2);
+  lcd.print("T:");
+  lcd.setCursor(15, 2);
+  lcd.print("H:");
+  lcd.setCursor(0, 3);
+  lcd.print("DT:");
+  lcd.setCursor(8, 3);
+  lcd.print("LT:");
+  lcd.setCursor(14, 3);
+  lcd.print("RN:");
 }
 
 void buzzerBoot()
 {
-	// Set buzzer - pin 9 as an output
-	pinMode(BUZZER, OUTPUT);
+  // Set buzzer - pin 9 as an output
+  pinMode(BUZZER, OUTPUT);
 }
 
 void ledBoot()
 {
-	pinMode(MOTION_LED, OUTPUT);
+  pinMode(MOTION_LED, OUTPUT);
 }
 
 void xbeeBoot()
 {
-	Serial.begin(9600);
-	while (!Serial)
-	{
-		;
-	}
+  Serial.begin(9600);
+  while (!Serial)
+  {
+    ;
+  }
 }
 
 void printWifiStatus()
 {
-	// print the SSID of the network you're attached to
-	// Serial.print("SSID: ");
-	// Serial.println(WiFi.SSID());
+  // print the SSID of the network you're attached to
+  // Serial.print("SSID: ");
+  // Serial.println(WiFi.SSID());
 
-	// print your WiFi shield's IP address
-	IPAddress ip = WiFi.localIP();
-	clearLCDRow(0);
-	lcd.setCursor(0, 0);
-	lcd.print("IP: ");
-	lcd.print(ip);
+  // print your WiFi shield's IP address
+  IPAddress ip = WiFi.localIP();
+  clearLCDRow(0);
+  lcd.setCursor(0, 0);
+  lcd.print("IP: ");
+  lcd.print(ip);
 }
 
 void espBoot()
 {
-	status = WL_IDLE_STATUS;
-	clearLCDRow(0);
-	lcd.setCursor(0, 0);
-	lcd.print("Initializing WIFI");
-	// Start the software serial for communication with the ESP8266
-	ESPserial.begin(9600);
+  status = WL_IDLE_STATUS;
+  clearLCDRow(0);
+  lcd.setCursor(0, 0);
+  lcd.print("Initializing WIFI");
+  // Start the software serial for communication with the ESP8266
+  ESPserial.begin(9600);
 
-	// initialize ESP module
-	WiFi.init(&ESPserial);
+  // initialize ESP module
+  WiFi.init(&ESPserial);
 
-	// check for the presence of the shield
-	if (WiFi.status() == WL_NO_SHIELD)
-	{
-		clearLCDRow(0);
-		lcd.setCursor(0, 0);
-		lcd.print("No WiFi shield!");
-		// don't continue
-		// while (true);
-	}
+  // check for the presence of the shield
+  if (WiFi.status() == WL_NO_SHIELD)
+  {
+    clearLCDRow(0);
+    lcd.setCursor(0, 0);
+    lcd.print("No WiFi shield!");
+    // don't continue
+    // while (true);
+  }
 
-	// attempt to connect to WiFi network
-	if (status != WL_CONNECTED)
-	{
-		clearLCDRow(0);
-		lcd.setCursor(0, 0);
-		lcd.print("Connect: "  );
-		//for demo, comment when using home wifi
-		//lcd.print("CJ's");
-		//for actual home use, uncomment when using home wifi
-		lcd.print(SSID);
-		// Connect to WPA/WPA2 network
-		status = WiFi.begin(SSID, PASSWORD);
-		delay(WIFI_CONNECT_DELAY);
-	}
+  // attempt to connect to WiFi network
+  if (status != WL_CONNECTED)
+  {
+    clearLCDRow(0);
+    lcd.setCursor(0, 0);
+    lcd.print("Connect: "  );
+    //for demo, comment when using home wifi
+    lcd.print("CJ's");
+    //for actual home use, uncomment when using home wifi
+    //lcd.print(SSID);
+    // Connect to WPA/WPA2 network
+    status = WiFi.begin(SSID, PASSWORD);
+    delay(WIFI_CONNECT_DELAY);
+  }
 
-	if (status == WL_CONNECTED)
-	{
-		printWifiStatus();// start the web server on port 80
-		server.begin();
-		client = NULL;
-	}
-	else if (status != WL_CONNECTED)
-	{
-		clearLCDRow(0);
-		lcd.setCursor(0, 0);
-		lcd.print("WIFI OFF");
-	}
+  if (status == WL_CONNECTED)
+  {
+    printWifiStatus();// start the web server on port 80
+    server.begin();
+    client = NULL;
+  }
+  else if (status != WL_CONNECTED)
+  {
+    clearLCDRow(0);
+    lcd.setCursor(0, 0);
+    lcd.print("WIFI OFF");
+  }
+}
+
+String getMotion()
+{
+  if (isMotionDetected)
+  {
+    return "Motion Detected";
+  }
+  else
+  {
+    return "No Motion";
+  }
+}
+
+String getRain()
+{
+  if (rain == "HVY")
+  {
+    return "HEAVY";
+  }
+  else
+  {
+    return rain;
+  }
+}
+
+String getLight()
+{
+  if (light == "DK")
+  {
+    return "DARK";
+  }
+  else if (light == "DM")
+  {
+    return "DIM";
+  }
+  else if (light == "LT")
+  {
+    return "SEMI BRIGHT";
+  }
+  else if (light == "BR")
+  {
+    return "BRIGHT";
+  }
+  else if (light == "VB")
+  {
+    return "VERY BRIGHT";
+  }
+
 }
 
 void sendHttpResponse()
 {
-	client.print(H1);
-	client.print(H2);
-	client.print(H3);
-	client.print(H4);
-	client.print(H5);
-	client.print(H6);
-	client.print(H7);
-	if(isMotionDetected)
-	{
-		client.print("Motion Detected");
-	}
-	else
-	{
-		client.print("No Motion");
-	}
-	client.print(H8);
-	client.print(H9);
-	client.print(syn);
-	client.print(H10);
-	client.print(ack_slave);
-	client.print(H11);
-	client.print(syn_terminal);
-	client.print(H12);
-	client.print(ack_terminal);
-	client.print(H13);
-	client.print(H14);
-	client.print(H15);
-	client.print(J1);
-	client.print(J2);
-	client.print(J3);
-	client.print(H16);
-	client.print(temperature);
-	client.print(H17);
-	client.print(humidity);
-	client.print(H18);
-	if (rain == "HVY")
-	{
-		client.print("HEAVY");
-	}
-	else
-	{
-		client.print(rain);
-	}
-	client.print(H19);
-	client.print(H20);
-	client.print(smoke);
-	client.print(H21);
-	client.print(H22);
-	client.print(dust);
-	client.print(H23);
-	client.print(H24);
-	if (light == "DK")
-	{
-		client.print("DARK");
-	}
-	else if (light == "DM")
-	{
-		client.print("DIM");
-	}
-	else if (light == "LT")
-	{
-		client.print("SEMI BRIGHT");
-	}
-	else if (light == "BR")
-	{
-		client.print("BRIGHT");
-	}
-	else if (light == "VB")
-	{
-		client.print("VERY BRIGHT");
-	}
-	client.print(H25);
-	client.print(H26);
-	client.print(co);
-	client.print(H27);
-	client.print(H28);
-	client.print(co2);
-	client.print(H29);
-	client.print(H30);
-	client.print(lpg);
-	client.print(H31);
-	client.print(H32);
+  client.print(H1);
+  client.print(H2);
+  client.print(H3);
+  client.print(H4);
+  client.print(H5);
+  client.print(H6);
+  client.print(H7);
+  client.print(getMotion());
+  client.print(H8);
+  client.print(H9);
+  client.print(syn + syn_master_payload + ack_from_master_to_slave);
+  client.print(H10);
+  client.print(syn_slave + syn_slave_payload + ack_from_slave_to_master);
+  client.print(H11);
+  client.print(syn_terminal);
+  client.print(H12);
+  client.print(ack_terminal);
+  client.print(H13);
+  client.print(H14);
+  client.print(H15);
+  client.print(J1);
+  client.print(J2);
+  client.print(J3);
+  client.print(H16);
+  client.print(temperature);
+  client.print(H17);
+  client.print(humidity);
+  client.print(H18);
+  client.print(getRain());
+  client.print(H19);
+  client.print(H20);
+  client.print(smoke);
+  client.print(H21);
+  client.print(H22);
+  client.print(dust);
+  client.print(H23);
+  client.print(H24);
+  client.print(getLight());
+  client.print(H25);
+  client.print(H26);
+  client.print(co);
+  client.print(H27);
+  client.print(H28);
+  client.print(co2);
+  client.print(H29);
+  client.print(H30);
+  client.print(lpg);
+  client.print(H31);
+  client.print(H32);
 }
 
+void sendUpdatesToWeb()
+{
+
+  //  String json_data = "{\"motion\":\"" + getMotion();
+  //  json_data += "\",\"temp\":\"" + String(temperature);
+  //  json_data += "\",\"humid\":\"" + String(humidity);
+  //  json_data += "\",\"rain\":\"" + getRain() ;
+  //  json_data += "\",\"smoke\":\"" + String(smoke);
+  //  json_data += "\",\"dust\":\"" + String(dust);
+  //  json_data += "\",\"light\":\"" + getLight();
+  //  json_data += "\",\"co\":\"" + String(co);
+  //  json_data += "\",\"co2\":\"" + String(co2);
+  //  json_data += ("\",\"lpg\":\"" + String(lpg) + "\"" + "}");
+
+  String json_data = "{\"motion\":\"getMotion()";
+  json_data += "\",\"temp\":\"String(temperature)";
+  json_data += "\",\"humid\":\"String(humidity)";
+  json_data += "\",\"rain\":\"getRain()";
+  json_data += "\",\"smoke\":\"String(smoke)";
+  json_data += "\",\"dust\":\"String(dust)";
+  json_data += "\",\"light\":\"getLight()";
+  json_data += "\",\"co\":\"String(co)";
+  json_data += "\",\"co2\":\"String(co2)";
+  json_data += "\",\"lpg\":\"String(lpg)\"}";
+  client.print(json_data);
+
+}
 void serviceClient()
 {
-	// initialize the circular buffer
-	buf.init();
+  // initialize the circular buffer
+  buf.init();
+  String HTTP_req;
 
-	// loop while the client's connected
-	while (client.connected())
-	{
-		// if there's bytes to read from the client,
-		if (client.available())
-		{
-			char c = client.read();               // read a byte, then
-			buf.push(c);                          // push it to the ring buffer
+  // loop while the client's connected
+  while (client.connected())
+  {
+    // if there's bytes to read from the client,
+    if (client.available())
+    {
+      char c = client.read();               // read a byte, then
+      buf.push(c);                          // push it to the ring buffer
+      HTTP_req += c;
 
-			// printing the stream to the serial monitor will slow down
-			// the receiving of data from the ESP filling the serial buffer
-			//Serial.write(c);
+      // printing the stream to the serial monitor will slow down
+      // the receiving of data from the ESP filling the serial buffer
+      //Serial.write(c);
 
-			// you got two newline characters in a row
-			// that's the end of the HTTP request, so send a response
-			if (buf.endsWith("\r\n\r\n"))
-			{
-				syn_terminal++;
-				ack_terminal++;
-				sendHttpResponse();
-				break;
-			}
+      // you got two newline characters in a row
+      // that's the end of the HTTP request, so send a response
+      if (buf.endsWith("\r\n\r\n"))
+      {
+        syn_terminal++;
+        ack_terminal++;
+        client.print(H0);
+        sendHttpResponse();
+        break;
+      }
+      else if (HTTP_req.indexOf("ajax_switch") > -1)
+      {
+        // read switch state and send appropriate paragraph text
+        syn_terminal++;
+        ack_terminal++;
+        client.print(H0);
+        sendUpdatesToWeb();
+        break;
+      }
 
-			if (buf.endsWith("GET /R"))
-			{
-				if (!isRequesting)
-				{
-					isRequesting = true;
-					syn_state = ON_DEMAND;
-					sendSyn();
-				}
-			}
-			
-			if(buf.endsWith("GET /U"))
-			{
-        if(isMotionDetected)
+      if (buf.endsWith("GET /R"))
+      {
+        if (!isRequesting)
         {
-				  isMotionDetected = false;
-				  digitalWrite(MOTION_LED, LOW);
+          isRequesting = true;
+          syn_state = ON_DEMAND;
+          sendSyn();
         }
-			}
-		}
-	}
+      }
+
+      if (buf.endsWith("GET /U"))
+      {
+        if (isMotionDetected)
+        {
+          isMotionDetected = false;
+          digitalWrite(MOTION_LED, LOW);
+        }
+      }
+    }
+  }
 }
 
 void listenClient()
 {
-	if (status == WL_CONNECTED)
-	{
-		client = server.available();  // listen for incoming clients
-		// if you get a client,
-		if (client)
-		{
-			serviceClient();
-			// close the connection
-			client.stop();
-		}
-	}
+  if (status == WL_CONNECTED)
+  {
+    client = server.available();  // listen for incoming clients
+    // if you get a client,
+    if (client)
+    {
+      serviceClient();
+      // close the connection
+      client.stop();
+    }
+  }
 }
 
 void buzz()
 {
-	tone(BUZZER, BUZZER_TONE1);
-	delay(BUZZER_DELAY);
-	noTone(BUZZER);
-	delay(BUZZER_DELAY);
+  tone(BUZZER, BUZZER_TONE1);
+  delay(BUZZER_DELAY);
+  noTone(BUZZER);
+  delay(BUZZER_DELAY);
 
-	tone(BUZZER, BUZZER_TONE2);
-	delay(BUZZER_DELAY);
-	noTone(BUZZER);
-	delay(BUZZER_DELAY);
+  tone(BUZZER, BUZZER_TONE2);
+  delay(BUZZER_DELAY);
+  noTone(BUZZER);
+  delay(BUZZER_DELAY);
 
-	tone(BUZZER, BUZZER_TONE1);
-	delay(BUZZER_DELAY);
-	noTone(BUZZER);
-	delay(BUZZER_DELAY);
+  tone(BUZZER, BUZZER_TONE1);
+  delay(BUZZER_DELAY);
+  noTone(BUZZER);
+  delay(BUZZER_DELAY);
 
-	tone(BUZZER, BUZZER_TONE2);
-	delay(BUZZER_DELAY);
-	noTone(BUZZER);
-	delay(BUZZER_DELAY);
+  tone(BUZZER, BUZZER_TONE2);
+  delay(BUZZER_DELAY);
+  noTone(BUZZER);
+  delay(BUZZER_DELAY);
 }
 
 void detectedMotion()
 {
-	isMotionDetected = true;
-	digitalWrite(MOTION_LED, HIGH);
+  isMotionDetected = true;
+  digitalWrite(MOTION_LED, HIGH);
 }
 
 void checkKeypad()
 {
-	char key = keypad.getKey();
+  char key = keypad.getKey();
 
-	if (key != NO_KEY)
-	{
-		switch (key)
-		{
-			case '*':
-        if(isMotionDetected)
+  if (key != NO_KEY)
+  {
+    switch (key)
+    {
+      case '*':
+        if (isMotionDetected)
         {
-				  isMotionDetected = false;
-				  digitalWrite(MOTION_LED, LOW);
+          isMotionDetected = false;
+          digitalWrite(MOTION_LED, LOW);
         }
-				break;
+        break;
 
-			case '1':
-				syn_state = ENGLISH;
-				sendSyn();
-				break;
+      case '1':
+        syn_state = ENGLISH;
+        sendSyn();
+        break;
 
-			case '2':
-				syn_state = SPANISH;
-				sendSyn();
-				break;
+      case '2':
+        syn_state = SPANISH;
+        sendSyn();
+        break;
 
-			case '3':
-				syn_state = GUEST_ACK;
-				sendSyn();
-				break;
+      case '3':
+        syn_state = GUEST_ACK;
+        sendSyn();
+        break;
 
-			case '5':
-				if (!isRequesting)
-				{
-					isRequesting = true;
-					syn_state = ON_DEMAND;
-					sendSyn();
-				}
-				break;
+      case '5':
+        if (!isRequesting)
+        {
+          isRequesting = true;
+          syn_state = ON_DEMAND;
+          sendSyn();
+        }
+        break;
 
-			case '#':
-				espBoot();
-				break;
+      case '#':
+        espBoot();
+        break;
 
-			case '0':
-				reboot();
-		}
-	}
+      case '0':
+        reboot();
+    }
+  }
 }
 
 void clearMsgBuffer()
 {
-	is_msg_buffer_used = false;
-	memset(msg, 0, sizeof(msg));
-	msg_size = 0;
-	is_handshake_completed = false;
-	is_syn_sent = false;
-	syn_state = LAZY;
-	isRequesting = false;
+  is_msg_buffer_used = false;
+  memset(msg, 0, sizeof(msg));
+  msg_size = 0;
+  is_handshake_completed = false;
+  is_syn_sent = false;
+  syn_state = LAZY;
+  isRequesting = false;
 }
 
 void checkMsgBuffer()
 {
-	if (is_msg_buffer_used && (millis() - msg_buffer_timer) >= MSG_BUFFER_TIMEOUT)
-	{
-		clearMsgBuffer();
-	}
+  if (is_msg_buffer_used && (millis() - msg_buffer_timer) >= MSG_BUFFER_TIMEOUT)
+  {
+    clearMsgBuffer();
+  }
 }
 
 void mapLight (String lightData)
 {
-	switch (lightData.charAt(0))
-	{
-		case '0':
-			light = "DK";
-			break;
-		case '1':
-			light = "DM";
-			break;
-		case '2':
-			light = "LT";
-			break;
-		case '3':
-			light = "BR";
-			break;
-		case '4':
-			light = "VB";
-	}
+  switch (lightData.charAt(0))
+  {
+    case '0':
+      light = "DK";
+      break;
+    case '1':
+      light = "DM";
+      break;
+    case '2':
+      light = "LT";
+      break;
+    case '3':
+      light = "BR";
+      break;
+    case '4':
+      light = "VB";
+  }
 }
 
 void mapRain(String rainData)
 {
-	switch (rainData.charAt(0))
-	{
-		case '0':
-			rain = "HVY";
-			break;
-		case '1':
-			rain = "WET";
-			break;
-		case '2':
-			rain = "DRY";
-	}
+  switch (rainData.charAt(0))
+  {
+    case '0':
+      rain = "HVY";
+      break;
+    case '1':
+      rain = "WET";
+      break;
+    case '2':
+      rain = "DRY";
+  }
 }
 
 void translate()
 {
-	char default_data[10];
-	byte index = 0;
-	memset(default_data, 0, sizeof(default_data));
-	for (int i = 0 ; i < msg_size; i++)
-	{
-		char c = msg[i];
-		switch (c)
-		{
-			case 'Z':
-				break;
+  char default_data[10];
+  byte index = 0;
+  memset(default_data, 0, sizeof(default_data));
+  for (int i = 0 ; i < msg_size; i++)
+  {
+    char c = msg[i];
+    switch (c)
+    {
+      case 'Z':
+        break;
 
-			case 'L':
-				break;
+      case 'L':
+        break;
 
-			case 'R':
-				mapLight(default_data);
-				index = 0;
-				memset(default_data, 0, sizeof(default_data));
-				break;
+      case 'R':
+        mapLight(default_data);
+        index = 0;
+        memset(default_data, 0, sizeof(default_data));
+        break;
 
-			case 'T':
-				mapRain(default_data);
-				index = 0;
-				memset(default_data, 0, sizeof(default_data));
-				break;
+      case 'T':
+        mapRain(default_data);
+        index = 0;
+        memset(default_data, 0, sizeof(default_data));
+        break;
 
-			case 'H':
-				temperature  = default_data;
-				index = 0;
-				memset(default_data, 0, sizeof(default_data));
-				break;
+      case 'H':
+        temperature  = default_data;
+        index = 0;
+        memset(default_data, 0, sizeof(default_data));
+        break;
 
-			case 'G':
-				humidity = default_data;
-				index = 0;
-				memset(default_data, 0, sizeof(default_data));
-				break;
+      case 'G':
+        humidity = default_data;
+        index = 0;
+        memset(default_data, 0, sizeof(default_data));
+        break;
 
-			case 'C':
-				lpg = default_data;
-				index = 0;
-				memset(default_data, 0, sizeof(default_data));
-				break;
+      case 'C':
+        lpg = default_data;
+        index = 0;
+        memset(default_data, 0, sizeof(default_data));
+        break;
 
-			case 'E':
-				co = default_data;
-				index = 0;
-				memset(default_data, 0, sizeof(default_data));
-				break;
+      case 'E':
+        co = default_data;
+        index = 0;
+        memset(default_data, 0, sizeof(default_data));
+        break;
 
-			case 'N':
-				smoke = default_data;
-				index = 0;
-				memset(default_data, 0, sizeof(default_data));
-				break;
+      case 'N':
+        smoke = default_data;
+        index = 0;
+        memset(default_data, 0, sizeof(default_data));
+        break;
 
-			case 'D':
-				co2 = default_data;
-				index = 0;
-				memset(default_data, 0, sizeof(default_data));
-				break;
+      case 'D':
+        co2 = default_data;
+        index = 0;
+        memset(default_data, 0, sizeof(default_data));
+        break;
 
-			case 'S':
-				dust = default_data;
-				index = 0;
-				memset(default_data, 0, sizeof(default_data));
-				isRequesting = false;
-				break;
+      case 'S':
+        dust = default_data;
+        index = 0;
+        memset(default_data, 0, sizeof(default_data));
+        isRequesting = false;
+        break;
 
-			default:
-				default_data[index] = c;
-				index++;
-		}
-	}
+      default:
+        default_data[index] = c;
+        index++;
+    }
+  }
 }
 
 void decodeMsg()
 {
-	switch (msg[0])
-	{
-		case 'B':
-			buzz();
-			break;
+  switch (msg[0])
+  {
+    case 'B':
+      buzz();
+      break;
 
-		case 'M':
-			detectedMotion();
-			break;
+    case 'M':
+      detectedMotion();
+      break;
 
-		case 'Z':
-			translate();
-			lcdDisplay();
-	}
-	clearMsgBuffer();
+    case 'Z':
+      translate();
+      lcdDisplay();
+  }
+  clearMsgBuffer();
 }
 
 void sendAck()
 {
-	Serial.write('K');
+  Serial.write('K');
+  ack_from_master_to_slave++;
 }
 
 void sendSyn()
 {
-	Serial.write('O');
+  Serial.write('O');
+  syn++;
 }
 
 void checkMsg()
 {
-	// see if there's incoming serial data:
-	if (syn_state == LAZY && (Serial.available() > 0))
-	{
-		incoming_byte = Serial.read();
-		if (!is_handshake_completed)
-		{
-			sendAck();
-			ack_slave++;
-			is_handshake_completed = true;
-			msg_buffer_timer = millis();
-			is_msg_buffer_used = true;
-		}
-		else
-		{
-			char c = (char)incoming_byte;
-			if (c == 'S')
-			{
-				msg[msg_size] = c;
-				msg_size++;
-				decodeMsg();
-			}
-			else
-			{
-				msg[msg_size] = c;
-				msg_size++;
-			}
-		}
-	}
+  // see if there's incoming serial data:
+  if (syn_state == LAZY && (Serial.available() > 0))
+  {
+    incoming_byte = Serial.read();
+    if (!is_handshake_completed)
+    {
+      sendAck();
+      syn_slave++;
+      is_handshake_completed = true;
+      msg_buffer_timer = millis();
+      is_msg_buffer_used = true;
+    }
+    else
+    {
+      char c = (char)incoming_byte;
+      syn_slave_payload++;
+      if (c == 'S')
+      {
+        msg[msg_size] = c;
+        msg_size++;
+        decodeMsg();
+      }
+      else
+      {
+        msg[msg_size] = c;
+        msg_size++;
+      }
+    }
+  }
 }
 
 void sendMsg()
 {
-	if (syn_state != LAZY && (Serial.available() > 0))
-	{
-		incoming_byte = Serial.read();
+  if (syn_state != LAZY && (Serial.available() > 0))
+  {
+    incoming_byte = Serial.read();
 
-		if (((char)incoming_byte) == 'K')
-		{
+    if (((char)incoming_byte) == 'K')
+    {
+      ack_from_slave_to_master++;
+      switch (syn_state)
+      {
+        case ENGLISH:
 
-			switch (syn_state)
-			{
-				case ENGLISH:
+          Serial.write('E');
+          Serial.write('S');
+          break;
 
-					Serial.write('E');
-					Serial.write('S');
-					break;
+        case SPANISH:
+          Serial.write('P');
+          Serial.write('S');
+          break;
 
-				case SPANISH:
-					Serial.write('P');
-					Serial.write('S');
-					break;
+        case GUEST_ACK:
+          Serial.write('A');
+          Serial.write('S');
+          break;
 
-				case GUEST_ACK:
-					Serial.write('A');
-					Serial.write('S');
-					break;
-
-				case ON_DEMAND:
-					Serial.write('D');
-					Serial.write('S');
-			}
-			syn++;
-			is_syn_sent = false;
-			syn_state = LAZY;
-		}
-	}
+        case ON_DEMAND:
+          Serial.write('D');
+          Serial.write('S');
+      }
+      syn_master_payload += 2;
+      is_syn_sent = false;
+      syn_state = LAZY;
+    }
+  }
 }
 
 void reboot()
 {
-	lcdBoot();
-	ledBoot();
-	buzzerBoot();
-	xbeeBoot();
-	espBoot();
+  lcdBoot();
+  ledBoot();
+  buzzerBoot();
+  xbeeBoot();
+  espBoot();
 
 }
 
 void setup()
 {
-	reboot();
+  reboot();
 }
 
 void loop()
 {
-	checkMsg();
-	//clear message buffer to prevent collision and weird behavior
-	checkMsgBuffer();
-	checkKeypad();
-	listenClient();
-	sendMsg();
+  checkMsg();
+  //clear message buffer to prevent collision and weird behavior
+  checkMsgBuffer();
+  checkKeypad();
+  listenClient();
+  sendMsg();
 }

@@ -302,6 +302,7 @@ $( document ).ready(function() {
 	$('#lpg-value').checkLPG();
 
 	function updateStates(){
+		console.log("HERE");
 		var nocache = "&nocache" + Math.random() * 1000000;
 		var request = new XMLHttpRequest();
 		request.onreadystatechange = function(){
@@ -317,8 +318,7 @@ $( document ).ready(function() {
 	}
 
 	setInterval(updateStates, 10000);
-	console.log("HERE");
-	
+
 });
 
 

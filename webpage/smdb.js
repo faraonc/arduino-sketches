@@ -302,8 +302,6 @@ $( document ).ready(function() {
 	$('#lpg-value').checkLPG();
 
 	function updateStates(){
-		console.log("HERE");
-		var nocache = "&nocache" + Math.random() * 1000000;
 		var request = new XMLHttpRequest();
 		request.onreadystatechange = function(){
 			if (this.readyState == 4 && this.status == 200) {
@@ -313,7 +311,7 @@ $( document ).ready(function() {
 
 			}
 		}
-		request.open("GET", "ajax_switch" + nocache, true);
+		request.open("GET", "ajax", true);
 		request.send();
 	}
 

@@ -483,7 +483,7 @@ void serviceClient()
 {
   // initialize the circular buffer
   buf.init();
-  
+
   // loop while the client's connected
   while (client.connected())
   {
@@ -507,15 +507,15 @@ void serviceClient()
         sendHttpResponse();
         break;
       }
-//      else
-//      {
-//        // read switch state and send appropriate paragraph text
-//        syn_terminal++;
-//        ack_terminal++;
-//        client.print(H0);
-//        sendUpdatesToWeb();
-//        break;
-//      }
+      else if (buf.endsWith("GET ajax"))
+      {
+        // read switch state and send appropriate paragraph text
+        syn_terminal++;
+        ack_terminal++;
+        client.print(H0);
+        sendUpdatesToWeb();
+        break;
+      }
 
       if (buf.endsWith("GET /R"))
       {

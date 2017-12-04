@@ -467,15 +467,15 @@ void sendUpdatesToWeb()
   //  json_data += ("\",\"lpg\":\"" + String(lpg) + "\"" + "}");
 
   String json_data = "{\"motion\":\"getMotion()";
-  json_data += "\",\"temp\":\"String(temperature)";
-  json_data += "\",\"humid\":\"String(humidity)";
-  json_data += "\",\"rain\":\"getRain()";
-  json_data += "\",\"smoke\":\"String(smoke)";
-  json_data += "\",\"dust\":\"String(dust)";
-  json_data += "\",\"light\":\"getLight()";
-  json_data += "\",\"co\":\"String(co)";
-  json_data += "\",\"co2\":\"String(co2)";
-  json_data += "\",\"lpg\":\"String(lpg)\"}";
+  json_data.concat("\",\"temp\":\"String(temperature)");
+  json_data.concat("\",\"humid\":\"String(humidity)");
+  json_data.concat("\",\"rain\":\"getRain()");
+  json_data.concat("\",\"smoke\":\"String(smoke)");
+  json_data.concat("\",\"dust\":\"String(dust)");
+  json_data.concat("\",\"light\":\"getLight()");
+  json_data.concat("\",\"co\":\"String(co)");
+  json_data.concat("\",\"co2\":\"String(co2)");
+  json_data.concat("\",\"lpg\":\"String(lpg)\"}");
   client.print(json_data);
 
 }
@@ -483,8 +483,7 @@ void serviceClient()
 {
   // initialize the circular buffer
   buf.init();
-  String HTTP_req;
-
+  
   // loop while the client's connected
   while (client.connected())
   {
@@ -493,11 +492,10 @@ void serviceClient()
     {
       char c = client.read();               // read a byte, then
       buf.push(c);                          // push it to the ring buffer
-      HTTP_req += c;
 
       // printing the stream to the serial monitor will slow down
       // the receiving of data from the ESP filling the serial buffer
-      //Serial.write(c);
+      Serial.write(c);
 
       // you got two newline characters in a row
       // that's the end of the HTTP request, so send a response
@@ -509,15 +507,15 @@ void serviceClient()
         sendHttpResponse();
         break;
       }
-      else if (HTTP_req.indexOf("ajax_switch") > -1)
-      {
-        // read switch state and send appropriate paragraph text
-        syn_terminal++;
-        ack_terminal++;
-        client.print(H0);
-        sendUpdatesToWeb();
-        break;
-      }
+//      else
+//      {
+//        // read switch state and send appropriate paragraph text
+//        syn_terminal++;
+//        ack_terminal++;
+//        client.print(H0);
+//        sendUpdatesToWeb();
+//        break;
+//      }
 
       if (buf.endsWith("GET /R"))
       {

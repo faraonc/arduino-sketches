@@ -317,6 +317,7 @@ $( document ).ready(function() {
 	}
 
 	setInterval(updateStates, 10000);
+	console.log("HERE");
 	
 });
 

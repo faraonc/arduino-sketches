@@ -18,7 +18,7 @@ WiFiEspServer server(HTTP_PORT);
 WiFiEspClient client;
 
 // use a ring buffer to increase speed and reduce memory allocation
-RingBuffer buf(8);
+RingBuffer buf(256);
 int status = WL_IDLE_STATUS;
 
 unsigned int syn_slave_payload = 0;
@@ -40,6 +40,8 @@ unsigned int msg_size = 0;
 bool is_msg_buffer_used = false;
 unsigned long msg_buffer_timer = 0;
 const int MSG_BUFFER_TIMEOUT = 2000;
+
+char m[1024];
 
 enum
 {
@@ -527,11 +529,6 @@ void serviceClient()
           digitalWrite(MOTION_LED, LOW);
         }
       }
-//
-//      if (buf.endsWith("GET /ajax"))
-//      {
-//        Serial.println("AJAX ATLAST!");
-//      }
     }
   }
 }

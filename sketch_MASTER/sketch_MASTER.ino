@@ -53,6 +53,7 @@ byte syn_state = LAZY;
 
 const String H0 = "HTTP/1.1 200 OK\nContent-type:text/html";
 const String H1 = "\n\n<!DOCTYPE html><html><head><meta charset=\"utf-8\">";
+const String ICO_PATH = "<link rel=\"icon\" href=\"data:,\">";
 const String H2 = "<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\">";
 const String H3 = "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js\"></script>";
 const String H4 = "<script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>";
@@ -402,6 +403,7 @@ String getLight()
 void sendHttpResponse()
 {
   client.print(H1);
+  client.print(ICO_PATH);
   client.print(H2);
   client.print(H3);
   client.print(H4);
@@ -503,17 +505,7 @@ void serviceClient()
       {
         syn_terminal++;
         ack_terminal++;
-        client.print(H0);
         sendHttpResponse();
-        break;
-      }
-      else if (buf.endsWith("GET ajax"))
-      {
-        // read switch state and send appropriate paragraph text
-        syn_terminal++;
-        ack_terminal++;
-        client.print(H0);
-        sendUpdatesToWeb();
         break;
       }
 
@@ -534,6 +526,11 @@ void serviceClient()
           isMotionDetected = false;
           digitalWrite(MOTION_LED, LOW);
         }
+      }
+
+      if (buf.endsWith("GET /ajax"))
+      {
+        Serial.println("AJAX ATLAST!");
       }
     }
   }
@@ -868,6 +865,15 @@ void sendMsg()
   }
 }
 
+void checkConnection()
+{
+  if (WiFi.status() != WL_CONNECTED)
+  {
+    espBoot();
+  }
+
+}
+
 void reboot()
 {
   lcdBoot();
@@ -891,4 +897,5 @@ void loop()
   checkKeypad();
   listenClient();
   sendMsg();
+  checkConnection();
 }

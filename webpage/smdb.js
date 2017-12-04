@@ -312,10 +312,13 @@ $( document ).ready(function() {
 			}
 		}
 		request.open("GET", "ajax", true);
-		request.send();
+		request.send(null);
+		setTimeout(updateStates, 10000);
 	}
 
-	setInterval(updateStates, 10000);
+	$('body').attr("onload", "updateStates()");
+
+	
 
 });
 

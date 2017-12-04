@@ -527,11 +527,11 @@ void serviceClient()
           digitalWrite(MOTION_LED, LOW);
         }
       }
-
-      if (buf.endsWith("GET /ajax"))
-      {
-        Serial.println("AJAX ATLAST!");
-      }
+//
+//      if (buf.endsWith("GET /ajax"))
+//      {
+//        Serial.println("AJAX ATLAST!");
+//      }
     }
   }
 }

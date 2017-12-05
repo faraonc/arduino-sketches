@@ -551,7 +551,6 @@ void serviceClient()
         ack_terminal++;
         if (http_req[0] == 'a' && http_req[1] == 'j' && http_req[2] == 'a' && http_req[3] == 'x')
         {
-          Serial.print("MAJOR");
           sendAjaxRequest();
         }
         else
@@ -955,3 +954,4 @@ void loop()
   sendMsg();
   listenClient();
 }
+

@@ -344,7 +344,7 @@ $( document ).ready(function() {
 		request.send(null);
 	}
 
-	setInterval(updateStates, 15000);
+	setInterval(updateStates, 60000);
 
 });
 

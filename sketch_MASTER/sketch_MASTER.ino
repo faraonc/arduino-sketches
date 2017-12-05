@@ -54,6 +54,8 @@ byte syn_state = LAZY;
 char http_req[4];
 byte http_req_i = 0;
 
+bool do_not_disturb = false;
+
 const String H0 = "HTTP/1.1 200 OK\nContent-type:text/html\nConnection: keep-alive\n\n";
 const String H1 = "<!DOCTYPE html><html><head><meta charset=\"utf-8\">";
 const String ICO_PATH = "<link rel=\"icon\" href=\"data:,\">";
@@ -62,7 +64,7 @@ const String H3 = "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.
 const String H4 = "<script src=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js\"></script>";
 const String H5 = "</head><body><nav class=\"navbar navbar-inverse\"><div class=\"container-fluid\">";
 const String H6 = "<div class=\"navbar-header\"><p id=\"team\" class=\"navbar-brand\"></p></div><ul class=\"nav navbar-nav\">";
-const String H7 = "<li class=\"active\"><a href=\"/R\">Refresh Data</a></li><li> <a href=\"/U\" id=\"blink\">";
+const String H7 = "<li> <a href=\"/U\" id=\"blink\">";
 
 const String H8 = "</a></li><li class=\"dropdown\"><a class=\"dropdown-toggle\"data-toggle=\"dropdown\" href=\"#\">Communication";
 const String H9 = "<span class=\"caret\"></span></a><ul class=\"dropdown-menu\"><li><a>Master to Slave: ";
@@ -536,16 +538,6 @@ void serviceClient()
         break;
       }
 
-      if (buf.endsWith("GET /R"))
-      {
-        if (!isRequesting)
-        {
-          isRequesting = true;
-          syn_state = ON_DEMAND;
-          sendSyn();
-        }
-      }
-
       if (buf.endsWith("GET /U"))
       {
         if (isMotionDetected)
@@ -639,6 +631,7 @@ void checkKeypad()
         {
           isRequesting = true;
           syn_state = ON_DEMAND;
+          do_not_disturb = true;
           sendSyn();
         }
         break;
@@ -662,6 +655,7 @@ void clearMsgBuffer()
   is_syn_sent = false;
   syn_state = LAZY;
   isRequesting = false;
+  do_not_disturb = false;
 }
 
 void checkMsgBuffer()
@@ -784,6 +778,7 @@ void translate()
         index++;
     }
   }
+  do_not_disturb = false;
 }
 
 void decodeMsg()
@@ -801,6 +796,7 @@ void decodeMsg()
     case 'Z':
       translate();
       lcdDisplay();
+      do_not_disturb = true;
   }
   clearMsgBuffer();
 }
@@ -918,7 +914,10 @@ void loop()
   //clear message buffer to prevent collision and weird behavior
   checkMsgBuffer();
   checkKeypad();
-  listenClient();
+  if (!do_not_disturb)
+  {
+    listenClient();
+  }
   sendMsg();
   checkConnection();
 }

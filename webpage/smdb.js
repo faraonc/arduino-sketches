@@ -301,21 +301,21 @@ $( document ).ready(function() {
 	$('#co2-value').checkCO2();
 	$('#lpg-value').checkLPG();
 
-	// function updateStates(){
-	// 	var request = new XMLHttpRequest();
-	// 	request.onreadystatechange = function(){
-	// 		if (this.readyState == 4 && this.status == 200) {
-	// 			if(this.responseText != null){
-	// 				console.log(this.responseText);
-	// 			}
+	function updateStates(){
+		var request = new XMLHttpRequest();
+		request.onreadystatechange = function(){
+			if (this.readyState == 4 && this.status == 200) {
+				if(this.responseText != null){
+					console.log(this.responseText);
+				}
 
-	// 		}
-	// 	}
-	// 	request.open("GET", "ajax", true);
-	// 	request.send(null);
-	// }
+			}
+		}
+		request.open("GET", "ajax", true);
+		request.send(null);
+	}
 
-	// setInterval(updateStates, 10000);
+	setInterval(updateStates, 5000);
 
 });
 

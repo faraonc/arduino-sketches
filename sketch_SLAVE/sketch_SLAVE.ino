@@ -691,7 +691,6 @@ void checkMsg()
   if (syn_state == LAZY && (Serial.available() > 0))
   {
     incomingByte = Serial.read();
-
     if (!is_handshake_completed)
     {
       sendAck();
@@ -1035,3 +1034,4 @@ void loop()
     /** Uncomment prior to testing **/
   }
 }
+

@@ -4,8 +4,9 @@
 #include <Keypad.h>
 
 /**------------------ WIFI Variables ------------------**/
-const char *SSID     = "Conard James's iPhone";
-const char *PASSWORD = "12345678";
+const char *SSID     = "Starxf";
+const char *PASSWORD = "Carsomyr";
+const byte LCD_SSID_MAX_SIZE = 6;
 const byte HTTP_PORT = 80;
 const byte ESP_RX = 53;
 const byte ESP_TX = 52;
@@ -40,6 +41,15 @@ unsigned int msg_size = 0;
 bool is_msg_buffer_used = false;
 unsigned long msg_buffer_timer = 0;
 const int MSG_BUFFER_TIMEOUT = 3000;
+const byte MAX_DEFAULT_DATA_BUFFER = 10;
+
+bool is_wifi_health_check_started = false;
+unsigned long wifi_health_timer = 0;
+const int WIFI_HEALTH_CHECK_TIMEOUT = 10000;
+
+//for AJAX support
+char http_req[4];
+byte http_req_i = 0;
 
 enum
 {
@@ -51,10 +61,7 @@ enum
 };
 byte syn_state = LAZY;
 
-char http_req[4];
-byte http_req_i = 0;
-
-const String H0 = "HTTP/1.1 200 OK\nContent-type:text/html\nConnection: keep-alive\n\n";
+const String H0 = "HTTP/1.1 200 OK\nContent-type:text/html\nConnection: close\n\n";
 const String H1 = "<!DOCTYPE html><html><head><meta charset=\"utf-8\">";
 const String ICO_PATH = "<link rel=\"icon\" href=\"data:,\">";
 const String H2 = "<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\">";
@@ -156,7 +163,7 @@ const int BUZZER_DELAY = 250;
 /*******************************************************************************/
 
 /**------------------ Display variables ------------------**/
-String light = " ", rain = " ", temperature = "", humidity = "", lpg = "", co = "", co2 = "", smoke = "", dust = "";
+String light = "?", rain = "?", temperature = "0", humidity = "0", lpg = "0", co = "0", co2 = "0", smoke = "0", dust = "0";
 bool isMotionDetected = false;
 
 /*******************************************************************************/
@@ -291,16 +298,23 @@ void xbeeBoot()
 
 void printWifiStatus()
 {
-  // print the SSID of the network you're attached to
-  // Serial.print("SSID: ");
-  // Serial.println(WiFi.SSID());
-
   // print your WiFi shield's IP address
   IPAddress ip = WiFi.localIP();
   clearLCDRow(0);
   lcd.setCursor(0, 0);
   lcd.print("IP: ");
   lcd.print(ip);
+}
+
+int getSSIDStringSize()
+{
+  int size = 0;
+  while (SSID[size] != '\0')
+  {
+    size++;
+  }
+
+  return size;
 }
 
 void espBoot()
@@ -331,10 +345,17 @@ void espBoot()
     clearLCDRow(0);
     lcd.setCursor(0, 0);
     lcd.print("Connect: "  );
-    //for demo, comment when using home wifi
-    lcd.print("CJ's");
-    //for actual home use, uncomment when using home wifi
-    //lcd.print(SSID);
+
+    if (getSSIDStringSize() > LCD_SSID_MAX_SIZE)
+    {
+      //LCD Support
+      lcd.print("Wi-Fi");
+    }
+    else
+    {
+      lcd.print(SSID);
+    }
+
     // Connect to WPA/WPA2 network
     status = WiFi.begin(SSID, PASSWORD);
     delay(WIFI_CONNECT_DELAY);
@@ -401,8 +422,38 @@ String getLight()
     return "VERY BRIGHT";
   }
 
-  return " ";
+  return light;
 
+}
+
+void sendMajorAjax()
+{
+  String json_data = "{\"motion\":\"" + getMotion();
+  json_data.concat("\",\"master_slave\":\"" + String(syn + syn_master_payload + ack_from_master_to_slave));
+  json_data.concat("\",\"slave_master\":\"" + String(syn_slave + syn_slave_payload + ack_from_slave_to_master));
+  json_data.concat("\",\"master_terminal\":\"" + String(syn_terminal));
+  json_data.concat("\",\"temp\":\"" + String(temperature));
+  json_data.concat("\",\"humid\":\"" + String(humidity));
+  json_data.concat("\",\"co\":\"" + String(co));
+  json_data.concat("\",\"co2\":\"" + String(co2));
+  json_data.concat("\",\"smoke\":\"" + String(smoke));
+  json_data.concat("\",\"lpg\":\"" + String(lpg));
+  json_data.concat("\",\"rain\":\"" + getRain());
+  json_data.concat("\",\"light\":\"" + getLight());
+  json_data.concat("\",\"terminal_master\":\"" + String(ack_terminal) + "\"}");
+  client.print(H0);
+  client.print(json_data);
+}
+
+void sendMinorAjax()
+{
+  String json_data = "{\"motion\":\"" + getMotion();
+  json_data.concat("\",\"master_slave\":\"" + String(syn + syn_master_payload + ack_from_master_to_slave));
+  json_data.concat("\",\"slave_master\":\"" + String(syn_slave + syn_slave_payload + ack_from_slave_to_master));
+  json_data.concat("\",\"master_terminal\":\"" + String(syn_terminal));
+  json_data.concat("\",\"terminal_master\":\"" + String(ack_terminal) + "\"}");
+  client.print(H0);
+  client.print(json_data);
 }
 
 void sendHttpResponse()
@@ -460,16 +511,6 @@ void sendHttpResponse()
   client.print(H32);
 }
 
-void sendUpdatesToWeb()
-{
-  String json_data = "{\"motion\":\"" + getMotion();
-  json_data.concat("\",\"master_slave\":\"" + String(syn + syn_master_payload + ack_from_master_to_slave));
-  json_data.concat("\",\"slave_master\":\"" + String(syn_slave + syn_slave_payload + ack_from_slave_to_master));
-  json_data.concat("\",\"master_terminal\":\"" + String(syn_terminal));
-  json_data.concat("\",\"terminal_master\":\"" + String(ack_terminal) + "\"}");
-  client.print(H0);
-  client.print(json_data);
-}
 
 void serviceClient()
 {
@@ -483,10 +524,11 @@ void serviceClient()
     if (client.available())
     {
       char c = client.read();               // read a byte, then
+      buf.push(c);                          // push it to the ring buffer
+
       // printing the stream to the serial monitor will slow down
       // the receiving of data from the ESP filling the serial buffer
-      // Serial.write(c);
-      buf.push(c);                          // push it to the ring buffer
+      //Serial.write(c);
 
       if (c == 'a' && http_req_i == 0)
       {
@@ -503,7 +545,7 @@ void serviceClient()
         http_req[http_req_i] = c;
         http_req_i++;
       }
-      else if (c == 'x' && http_req_i == 3)
+      else if ((c == 'x' || c == 'm') && http_req_i == 3)
       {
         http_req[http_req_i] = c;
       }
@@ -516,7 +558,11 @@ void serviceClient()
         ack_terminal++;
         if (http_req[0] == 'a' && http_req[1] == 'j' && http_req[2] == 'a' && http_req[3] == 'x')
         {
-          sendUpdatesToWeb();
+          sendMajorAjax();
+        }
+        else if (http_req[0] == 'a' && http_req[1] == 'j' && http_req[2] == 'm' && http_req[3] == 'x')
+        {
+          sendMinorAjax();
         }
         else
         {
@@ -691,7 +737,7 @@ void mapRain(String rainData)
 
 void translate()
 {
-  char default_data[10];
+  char default_data[MAX_DEFAULT_DATA_BUFFER];
   byte index = 0;
   memset(default_data, 0, sizeof(default_data));
   for (int i = 0 ; i < msg_size; i++)
@@ -763,10 +809,11 @@ void translate()
       default:
         default_data[index] = c;
         index++;
+        //overloaded
         if (index >= 10)
         {
           index = 0;
-          memset(default_data, 0, sizeof(default_data));
+          memset(default_data, 0, sizeof(MAX_DEFAULT_DATA_BUFFER));
           break;
         }
     }
@@ -801,6 +848,7 @@ void sendAck()
 void sendSyn()
 {
   Serial.write('O');
+  syn++;
 }
 
 void checkMsg()
@@ -844,7 +892,6 @@ void sendMsg()
 
     if (((char)incoming_byte) == 'K')
     {
-      syn++;
       ack_from_slave_to_master++;
       switch (syn_state)
       {
@@ -858,7 +905,7 @@ void sendMsg()
           Serial.write('P');
           Serial.write('S');
           break;
-        //
+
         case GUEST_ACK:
           Serial.write('A');
           Serial.write('S');
@@ -877,9 +924,19 @@ void sendMsg()
 
 void checkConnection()
 {
-  if (WiFi.status() != WL_CONNECTED)
+  if (!is_wifi_health_check_started)
   {
-    espBoot();
+    is_wifi_health_check_started = true;
+    wifi_health_timer = millis();
+  }
+  else if ((millis() - wifi_health_timer) >= WIFI_HEALTH_CHECK_TIMEOUT)
+  {
+    if (WiFi.status() != WL_CONNECTED)
+    {
+      espBoot();
+    }
+    is_wifi_health_check_started = false;
+    wifi_health_timer = 0;
   }
 
 }
@@ -905,7 +962,8 @@ void loop()
   //clear message buffer to prevent collision and weird behavior
   checkMsgBuffer();
   checkKeypad();
-  listenClient();
   sendMsg();
-  checkConnection();
+  noInterrupts();
+  listenClient();
+  interrupts();
 }

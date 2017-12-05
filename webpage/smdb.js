@@ -399,7 +399,7 @@ $( document ).ready(function() {
 	}
 
 	setInterval(updateMinorStates, 20000);
-	setInterval(updateMajorStates, 60000);
+	setInterval(updateMajorStates, 70000);
 
 });
 

@@ -437,6 +437,7 @@ void sendAjaxRequest()
   json_data.concat("\",\"master_terminal\":\"" + String(syn_terminal));
   json_data.concat("\",\"temp\":\"" + String(temperature));
   json_data.concat("\",\"humid\":\"" + String(humidity));
+  json_data.concat("\",\"dust\":\"" + String(dust));
   json_data.concat("\",\"co\":\"" + String(co));
   json_data.concat("\",\"co2\":\"" + String(co2));
   json_data.concat("\",\"smoke\":\"" + String(smoke));

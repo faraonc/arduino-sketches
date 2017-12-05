@@ -336,6 +336,7 @@ $( document ).ready(function() {
 
 					$('#blink').text(json_arduino.motion);
 					$('#air-quality span').checkAirQuality();
+					$('#weather-icon').checkWeather();
 					$('#light-value').checkLight();
 					$('#rain-value').checkRain();
 					$('#temp-value').checkTemp();

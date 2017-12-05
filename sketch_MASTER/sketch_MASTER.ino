@@ -442,6 +442,45 @@ void sendHttpResponse()
   client.print(H32);
 }
 
+void sendUpdatesToWeb()
+{
+
+  //  String json_data = "{\"motion\":\"" + getMotion();
+  //  json_data += "\",\"temp\":\"" + String(temperature);
+  //  json_data += "\",\"humid\":\"" + String(humidity);
+  //  json_data += "\",\"rain\":\"" + getRain() ;
+  //  json_data += "\",\"smoke\":\"" + String(smoke);
+  //  json_data += "\",\"dust\":\"" + String(dust);
+  //  json_data += "\",\"light\":\"" + getLight();
+  //  json_data += "\",\"co\":\"" + String(co);
+  //  json_data += "\",\"co2\":\"" + String(co2);
+  //  json_data += ("\",\"lpg\":\"" + String(lpg) + "\"" + "}");
+
+  String master_slave = String(syn + syn_master_payload + ack_from_master_to_slave);
+  String slave_master = String(syn_slave + syn_slave_payload + ack_from_slave_to_master);
+  String master_terminal = String(syn_terminal);
+  String terminal_master = String(ack_terminal);
+
+  String json_data = "{\"motion\":\"getMotion()";
+  json_data.concat("\",\"temp\":\"String(temperature)");
+  json_data.concat("\",\"humid\":\"String(humidity)");
+  json_data.concat("\",\"rain\":\"getRain()");
+  json_data.concat("\",\"smoke\":\"String(smoke)");
+  json_data.concat("\",\"dust\":\"String(dust)");
+  json_data.concat("\",\"light\":\"getLight()");
+  json_data.concat("\",\"co\":\"String(co)");
+  json_data.concat("\",\"co2\":\"String(co2)");
+
+  json_data.concat("\",\"master_slave\":\"String(co2)");
+  json_data.concat("\",\"slave_master\":\"String(co2)");
+  json_data.concat("\",\"master_terminal\":\"String(co2)");
+  json_data.concat("\",\"terminal_master\":\"String(co2)");
+
+  json_data.concat("\",\"lpg\":\"String(lpg)\"}");
+  client.print(json_data);
+
+}
+
 void serviceClient()
 {
   // initialize the circular buffer
@@ -488,7 +527,7 @@ void serviceClient()
         if (http_req[0] == 'a' && http_req[1] == 'j' && http_req[2] == 'a' && http_req[3] == 'x')
         {
           client.print(H0);
-          client.print("DATAAAAAAAAAAAAAAAAA");
+          sendUpdatesToWeb();
         }
         else
         {

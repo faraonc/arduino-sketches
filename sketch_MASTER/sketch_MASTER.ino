@@ -51,7 +51,10 @@ enum
 };
 byte syn_state = LAZY;
 
-const String H0 = "HTTP/1.1 200 OK\nContent-type:text/html";
+char http_req[4];
+byte http_req_i = 0;
+
+const String H0 = "HTTP/1.1 200 OK\nContent-type:text/html\nConnection: keep-alive";
 const String H1 = "\n\n<!DOCTYPE html><html><head><meta charset=\"utf-8\">";
 const String ICO_PATH = "<link rel=\"icon\" href=\"data:,\">";
 const String H2 = "<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\">";
@@ -451,11 +454,30 @@ void serviceClient()
     if (client.available())
     {
       char c = client.read();               // read a byte, then
-      buf.push(c);                          // push it to the ring buffer
-
       // printing the stream to the serial monitor will slow down
       // the receiving of data from the ESP filling the serial buffer
-      //Serial.write(c);
+      Serial.write(c);
+      buf.push(c);                          // push it to the ring buffer
+
+      if (c == 'a' && http_req_i == 0)
+      {
+        http_req[http_req_i] = c;
+        http_req_i++;
+      }
+      else if (c == 'j' && http_req_i == 1)
+      {
+        http_req[http_req_i] = c;
+        http_req_i++;
+      }
+      else if (c == 'a' && http_req_i == 2)
+      {
+        http_req[http_req_i] = c;
+        http_req_i++;
+      }
+      else if (c == 'x' && http_req_i == 3)
+      {
+        http_req[http_req_i] = c;
+      }
 
       // you got two newline characters in a row
       // that's the end of the HTTP request, so send a response
@@ -463,7 +485,18 @@ void serviceClient()
       {
         syn_terminal++;
         ack_terminal++;
-        sendHttpResponse();
+        if (http_req[0] == 'a' && http_req[1] == 'j' && http_req[2] == 'a' && http_req[3] == 'x')
+        {
+          Serial.println("INSIDE");
+          client.print(H0);
+          client.print("DATAAAAAAAAAAAAAAAAA");
+        }
+        else
+        {
+          sendHttpResponse();
+        }
+        memset(http_req, 0, sizeof(http_req));
+        http_req_i = 0;
         break;
       }
 
@@ -499,6 +532,7 @@ void listenClient()
     {
       serviceClient();
       // close the connection
+      delay(1);
       client.stop();
     }
   }
@@ -801,7 +835,7 @@ void sendMsg()
           Serial.write('P');
           Serial.write('S');
           break;
-
+        //
         case GUEST_ACK:
           Serial.write('A');
           Serial.write('S');

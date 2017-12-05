@@ -39,7 +39,7 @@ char msg[MSG_BUFFER];
 unsigned int msg_size = 0;
 bool is_msg_buffer_used = false;
 unsigned long msg_buffer_timer = 0;
-const int MSG_BUFFER_TIMEOUT = 2000;
+const int MSG_BUFFER_TIMEOUT = 3000;
 
 enum
 {
@@ -53,8 +53,6 @@ byte syn_state = LAZY;
 
 char http_req[4];
 byte http_req_i = 0;
-
-bool do_not_disturb = false;
 
 const String H0 = "HTTP/1.1 200 OK\nContent-type:text/html\nConnection: keep-alive\n\n";
 const String H1 = "<!DOCTYPE html><html><head><meta charset=\"utf-8\">";
@@ -465,19 +463,10 @@ void sendHttpResponse()
 void sendUpdatesToWeb()
 {
   String json_data = "{\"motion\":\"" + getMotion();
-  json_data.concat("\",\"temp\":\"" + String(temperature));
-  json_data.concat("\",\"humid\":\"" + String(humidity));
-  json_data.concat("\",\"rain\":\"" + getRain());
-  json_data.concat("\",\"smoke\":\"" + String(smoke));
-  json_data.concat("\",\"dust\":\"" + String(dust));
-  json_data.concat("\",\"light\":\"" + getLight());
-  json_data.concat("\",\"co\":\"" + String(co));
-  json_data.concat("\",\"co2\":\"" + String(co2));
   json_data.concat("\",\"master_slave\":\"" + String(syn + syn_master_payload + ack_from_master_to_slave));
   json_data.concat("\",\"slave_master\":\"" + String(syn_slave + syn_slave_payload + ack_from_slave_to_master));
   json_data.concat("\",\"master_terminal\":\"" + String(syn_terminal));
-  json_data.concat("\",\"terminal_master\":\"" + String(ack_terminal));
-  json_data.concat("\",\"lpg\":\"" + String(lpg) + "\"}");
+  json_data.concat("\",\"terminal_master\":\"" + String(ack_terminal) + "\"}");
   client.print(H0);
   client.print(json_data);
 }
@@ -631,7 +620,6 @@ void checkKeypad()
         {
           isRequesting = true;
           syn_state = ON_DEMAND;
-          do_not_disturb = true;
           sendSyn();
         }
         break;
@@ -655,7 +643,6 @@ void clearMsgBuffer()
   is_syn_sent = false;
   syn_state = LAZY;
   isRequesting = false;
-  do_not_disturb = false;
 }
 
 void checkMsgBuffer()
@@ -776,9 +763,14 @@ void translate()
       default:
         default_data[index] = c;
         index++;
+        if (index >= 10)
+        {
+          index = 0;
+          memset(default_data, 0, sizeof(default_data));
+          break;
+        }
     }
   }
-  do_not_disturb = false;
 }
 
 void decodeMsg()
@@ -796,7 +788,6 @@ void decodeMsg()
     case 'Z':
       translate();
       lcdDisplay();
-      do_not_disturb = true;
   }
   clearMsgBuffer();
 }
@@ -914,10 +905,7 @@ void loop()
   //clear message buffer to prevent collision and weird behavior
   checkMsgBuffer();
   checkKeypad();
-  if (!do_not_disturb)
-  {
-    listenClient();
-  }
+  listenClient();
   sendMsg();
   checkConnection();
 }

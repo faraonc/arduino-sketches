@@ -54,8 +54,8 @@ byte syn_state = LAZY;
 char http_req[4];
 byte http_req_i = 0;
 
-const String H0 = "HTTP/1.1 200 OK\nContent-type:text/html\nConnection: keep-alive";
-const String H1 = "\n\n<!DOCTYPE html><html><head><meta charset=\"utf-8\">";
+const String H0 = "HTTP/1.1 200 OK\nContent-type:text/html\nConnection: keep-alive\n\n";
+const String H1 = "<!DOCTYPE html><html><head><meta charset=\"utf-8\">";
 const String ICO_PATH = "<link rel=\"icon\" href=\"data:,\">";
 const String H2 = "<link rel=\"stylesheet\" href=\"https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css\">";
 const String H3 = "<script src=\"https://ajax.googleapis.com/ajax/libs/jquery/3.2.0/jquery.min.js\"></script>";
@@ -456,7 +456,7 @@ void serviceClient()
       char c = client.read();               // read a byte, then
       // printing the stream to the serial monitor will slow down
       // the receiving of data from the ESP filling the serial buffer
-      Serial.write(c);
+      // Serial.write(c);
       buf.push(c);                          // push it to the ring buffer
 
       if (c == 'a' && http_req_i == 0)
@@ -487,7 +487,6 @@ void serviceClient()
         ack_terminal++;
         if (http_req[0] == 'a' && http_req[1] == 'j' && http_req[2] == 'a' && http_req[3] == 'x')
         {
-          Serial.println("INSIDE");
           client.print(H0);
           client.print("DATAAAAAAAAAAAAAAAAA");
         }

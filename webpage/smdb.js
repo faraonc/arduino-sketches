@@ -306,7 +306,7 @@ $( document ).ready(function() {
 		request.onreadystatechange = function(){
 			if (this.readyState == 4 && this.status == 200) {
 				if(this.responseText != null){
-					console.log("Log: "+this.responseText);
+					console.log(this.responseText);
 				}
 
 			}

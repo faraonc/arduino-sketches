@@ -324,6 +324,16 @@ $( document ).ready(function() {
 					$('.dropdown-menu li').children('a').eq(2).text("Master to Terminal: " + json_arduino.master_terminal);
 					$('.dropdown-menu li').children('a').eq(3).text("Terminal to Master: " + json_arduino.terminal_master);
 
+					$('#light-value').removeClass();
+					$('#rain-value').removeClass();
+					$('#temp-value').removeClass();
+					$('#humid-value').removeClass();
+					$('#dust-value').removeClass();
+					$('#smoke-value').removeClass();
+					$('#co-value').removeClass();
+					$('#co2-value').removeClass();
+					$('#lpg-value').removeClass();
+
 					$('#blink').text(json_arduino.motion);
 					$('#air-quality span').checkAirQuality();
 					$('#light-value').checkLight();

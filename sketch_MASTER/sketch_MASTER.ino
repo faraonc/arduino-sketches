@@ -477,7 +477,7 @@ void sendUpdatesToWeb()
   json_data.concat("\",\"slave_master\":\"" + String(syn_slave + syn_slave_payload + ack_from_slave_to_master));
   json_data.concat("\",\"master_terminal\":\"" + String(syn_terminal));
   json_data.concat("\",\"terminal_master\":\"" + String(ack_terminal));
-  json_data.concat("\",\"lpg\":\"String(lpg)\"}");
+  json_data.concat("\",\"lpg\":\"" + String(lpg) + "\"}");
   client.print(H0);
   client.print(json_data);
 }

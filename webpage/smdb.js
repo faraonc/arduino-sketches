@@ -311,7 +311,7 @@ $( document ).ready(function() {
 					var json_arduino = JSON.parse(this.responseText)
 					$('#light-value').text(json_arduino.light);
 					$('#rain-value').text(json_arduino.rain);
-					$('#temp-value').text(json_arduino.temp + "&#8457;");
+					$('#temp-value').html(json_arduino.temp + "&#8457;");
 					$('#humid-value').text(json_arduino.humid + "%");
 					$('#dust-value').html(json_arduino.dust + " mg/m<sup>3</sup>");
 					$('#smoke-value').text(json_arduino.smoke + " ppm");
@@ -335,6 +335,7 @@ $( document ).ready(function() {
 					$('#co-value').checkCO();
 					$('#co2-value').checkCO2();
 					$('#lpg-value').checkLPG();
+					$('#blink').checkMotion();
 				}
 
 			}

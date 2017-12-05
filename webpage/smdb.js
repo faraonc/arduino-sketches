@@ -305,8 +305,36 @@ $( document ).ready(function() {
 		var request = new XMLHttpRequest();
 		request.onreadystatechange = function(){
 			if (this.readyState == 4 && this.status == 200) {
-				if(this.responseText != null){
+				if(this.responseText != null && this.responseText != ""){
 					console.log(this.responseText);
+
+					var json_arduino = JSON.parse(this.responseText)
+					$('#light-value').text(json_arduino.light);
+					$('#rain-value').text(json_arduino.rain);
+					$('#temp-value').text(json_arduino.temp + "&#8457;");
+					$('#humid-value').text(json_arduino.humid + "%");
+					$('#dust-value').html(json_arduino.dust + " mg/m<sup>3</sup>");
+					$('#smoke-value').text(json_arduino.smoke + " ppm");
+					$('#co-value').text(json_arduino.co + " ppm");
+					$('#co2-value').text(json_arduino.co2 + " ppm");
+					$('#lpg-value').checkLPG(json_arduino.lpg + " ppm");
+
+					$('.dropdown-menu li').children('a').eq(0).text("Master to Slave: " + json_arduino.master_slave);
+					$('.dropdown-menu li').children('a').eq(1).text("Slave to Master: " + json_arduino.slave_master);
+					$('.dropdown-menu li').children('a').eq(2).text("Master to Terminal: " + json_arduino.master_terminal);
+					$('.dropdown-menu li').children('a').eq(3).text("Terminal to Master: " + json_arduino.terminal_master);
+
+					$('#blink').text(json_arduino.motion);
+					$('#air-quality span').checkAirQuality();
+					$('#light-value').checkLight();
+					$('#rain-value').checkRain();
+					$('#temp-value').checkTemp();
+					$('#humid-value').checkHumid();
+					$('#dust-value').checkDust();
+					$('#smoke-value').checkSmoke();
+					$('#co-value').checkCO();
+					$('#co2-value').checkCO2();
+					$('#lpg-value').checkLPG();
 				}
 
 			}

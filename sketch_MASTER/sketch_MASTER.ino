@@ -354,6 +354,57 @@ void espBoot()
   }
 }
 
+String getMotion()
+{
+  if (isMotionDetected)
+  {
+    return "Motion Detected";
+  }
+  else
+  {
+    return "No Motion";
+  }
+}
+
+String getRain()
+{
+  if (rain == "HVY")
+  {
+    return "HEAVY";
+  }
+  else
+  {
+    return rain;
+  }
+}
+
+String getLight()
+{
+  if (light == "DK")
+  {
+    return "DARK";
+  }
+  else if (light == "DM")
+  {
+    return "DIM";
+  }
+  else if (light == "LT")
+  {
+    return "SEMI BRIGHT";
+  }
+  else if (light == "BR")
+  {
+    return "BRIGHT";
+  }
+  else if (light == "VB")
+  {
+    return "VERY BRIGHT";
+  }
+
+  return " ";
+
+}
+
 void sendHttpResponse()
 {
   client.print(H0);
@@ -365,14 +416,7 @@ void sendHttpResponse()
   client.print(H5);
   client.print(H6);
   client.print(H7);
-  if (isMotionDetected)
-  {
-    client.print("Motion Detected");
-  }
-  else
-  {
-    client.print("No Motion");
-  }
+  client.print(getMotion());
   client.print(H8);
   client.print(H9);
   client.print(syn + syn_master_payload + ack_from_master_to_slave);
@@ -393,14 +437,7 @@ void sendHttpResponse()
   client.print(H17);
   client.print(humidity);
   client.print(H18);
-  if (rain == "HVY")
-  {
-    client.print("HEAVY");
-  }
-  else
-  {
-    client.print(rain);
-  }
+  client.print(getRain());
   client.print(H19);
   client.print(H20);
   client.print(smoke);
@@ -409,26 +446,7 @@ void sendHttpResponse()
   client.print(dust);
   client.print(H23);
   client.print(H24);
-  if (light == "DK")
-  {
-    client.print("DARK");
-  }
-  else if (light == "DM")
-  {
-    client.print("DIM");
-  }
-  else if (light == "LT")
-  {
-    client.print("SEMI BRIGHT");
-  }
-  else if (light == "BR")
-  {
-    client.print("BRIGHT");
-  }
-  else if (light == "VB")
-  {
-    client.print("VERY BRIGHT");
-  }
+  client.print(getLight());
   client.print(H25);
   client.print(H26);
   client.print(co);
@@ -444,41 +462,22 @@ void sendHttpResponse()
 
 void sendUpdatesToWeb()
 {
-
-  //  String json_data = "{\"motion\":\"" + getMotion();
-  //  json_data += "\",\"temp\":\"" + String(temperature);
-  //  json_data += "\",\"humid\":\"" + String(humidity);
-  //  json_data += "\",\"rain\":\"" + getRain() ;
-  //  json_data += "\",\"smoke\":\"" + String(smoke);
-  //  json_data += "\",\"dust\":\"" + String(dust);
-  //  json_data += "\",\"light\":\"" + getLight();
-  //  json_data += "\",\"co\":\"" + String(co);
-  //  json_data += "\",\"co2\":\"" + String(co2);
-  //  json_data += ("\",\"lpg\":\"" + String(lpg) + "\"" + "}");
-
-  String master_slave = String(syn + syn_master_payload + ack_from_master_to_slave);
-  String slave_master = String(syn_slave + syn_slave_payload + ack_from_slave_to_master);
-  String master_terminal = String(syn_terminal);
-  String terminal_master = String(ack_terminal);
-
-  String json_data = "{\"motion\":\"getMotion()";
-  json_data.concat("\",\"temp\":\"String(temperature)");
-  json_data.concat("\",\"humid\":\"String(humidity)");
-  json_data.concat("\",\"rain\":\"getRain()");
-  json_data.concat("\",\"smoke\":\"String(smoke)");
-  json_data.concat("\",\"dust\":\"String(dust)");
-  json_data.concat("\",\"light\":\"getLight()");
-  json_data.concat("\",\"co\":\"String(co)");
-  json_data.concat("\",\"co2\":\"String(co2)");
-
-  json_data.concat("\",\"master_slave\":\"String(co2)");
-  json_data.concat("\",\"slave_master\":\"String(co2)");
-  json_data.concat("\",\"master_terminal\":\"String(co2)");
-  json_data.concat("\",\"terminal_master\":\"String(co2)");
-
+  String json_data = "{\"motion\":\"" + getMotion();
+  json_data.concat("\",\"temp\":\"" + String(temperature));
+  json_data.concat("\",\"humid\":\"" + String(humidity));
+  json_data.concat("\",\"rain\":\"" + getRain());
+  json_data.concat("\",\"smoke\":\"" + String(smoke));
+  json_data.concat("\",\"dust\":\"" + String(dust));
+  json_data.concat("\",\"light\":\"" + getLight());
+  json_data.concat("\",\"co\":\"" + String(co));
+  json_data.concat("\",\"co2\":\"" + String(co2));
+  json_data.concat("\",\"master_slave\":\"" + String(syn + syn_master_payload + ack_from_master_to_slave));
+  json_data.concat("\",\"slave_master\":\"" + String(syn_slave + syn_slave_payload + ack_from_slave_to_master));
+  json_data.concat("\",\"master_terminal\":\"" + String(syn_terminal));
+  json_data.concat("\",\"terminal_master\":\"" + String(ack_terminal));
   json_data.concat("\",\"lpg\":\"String(lpg)\"}");
+  client.print(H0);
   client.print(json_data);
-
 }
 
 void serviceClient()
@@ -526,7 +525,6 @@ void serviceClient()
         ack_terminal++;
         if (http_req[0] == 'a' && http_req[1] == 'j' && http_req[2] == 'a' && http_req[3] == 'x')
         {
-          client.print(H0);
           sendUpdatesToWeb();
         }
         else

@@ -429,7 +429,7 @@ String getLight()
 
 }
 
-void sendMajorAjax()
+void sendAjaxRequest()
 {
   String json_data = "{\"motion\":\"" + getMotion();
   json_data.concat("\",\"master_slave\":\"" + String(syn + syn_master_payload + ack_from_master_to_slave));
@@ -443,17 +443,6 @@ void sendMajorAjax()
   json_data.concat("\",\"lpg\":\"" + String(lpg));
   json_data.concat("\",\"rain\":\"" + getRain());
   json_data.concat("\",\"light\":\"" + getLight());
-  json_data.concat("\",\"terminal_master\":\"" + String(ack_terminal) + "\"}");
-  client.print(H0);
-  client.print(json_data);
-}
-
-void sendMinorAjax()
-{
-  String json_data = "{\"motion\":\"" + getMotion();
-  json_data.concat("\",\"master_slave\":\"" + String(syn + syn_master_payload + ack_from_master_to_slave));
-  json_data.concat("\",\"slave_master\":\"" + String(syn_slave + syn_slave_payload + ack_from_slave_to_master));
-  json_data.concat("\",\"master_terminal\":\"" + String(syn_terminal));
   json_data.concat("\",\"terminal_master\":\"" + String(ack_terminal) + "\"}");
   client.print(H0);
   client.print(json_data);
@@ -531,7 +520,7 @@ void serviceClient()
 
       // printing the stream to the serial monitor will slow down
       // the receiving of data from the ESP filling the serial buffer
-      //Serial.write(c);
+      Serial.write(c);
 
       if (c == 'a' && http_req_i == 0)
       {
@@ -548,7 +537,7 @@ void serviceClient()
         http_req[http_req_i] = c;
         http_req_i++;
       }
-      else if ((c == 'x' || c == 'm') && http_req_i == 3)
+      else if (c == 'x' && http_req_i == 3)
       {
         http_req[http_req_i] = c;
       }
@@ -561,11 +550,8 @@ void serviceClient()
         ack_terminal++;
         if (http_req[0] == 'a' && http_req[1] == 'j' && http_req[2] == 'a' && http_req[3] == 'x')
         {
-          sendMajorAjax();
-        }
-        else if (http_req[0] == 'a' && http_req[1] == 'j' && http_req[2] == 'm' && http_req[3] == 'x')
-        {
-          sendMinorAjax();
+          Serial.print("MAJOR");
+          sendAjaxRequest();
         }
         else
         {
@@ -966,7 +952,5 @@ void loop()
   checkMsgBuffer();
   checkKeypad();
   sendMsg();
-  noInterrupts();
   listenClient();
-  interrupts();
 }

@@ -301,51 +301,7 @@ $( document ).ready(function() {
 	$('#co2-value').checkCO2();
 	$('#lpg-value').checkLPG();
 
-	function updateMinorStates(){
-		var request = new XMLHttpRequest();
-		request.onreadystatechange = function(){
-			if (this.readyState == 4 && this.status == 200) {
-				if(this.responseText != null && this.responseText != ""){
-					console.log(this.responseText);
-
-					var json_arduino = JSON.parse(this.responseText)
-					$('.dropdown-menu li').children('a').eq(0).text("Master to Slave: " + json_arduino.master_slave);
-					$('.dropdown-menu li').children('a').eq(1).text("Slave to Master: " + json_arduino.slave_master);
-					$('.dropdown-menu li').children('a').eq(2).text("Master to Terminal: " + json_arduino.master_terminal);
-					$('.dropdown-menu li').children('a').eq(3).text("Terminal to Master: " + json_arduino.terminal_master);
-					$('#blink').text(json_arduino.motion);
-					$('#blink').checkMotion();
-				}
-
-			}
-		}
-		request.open("GET", "ajam", true);
-		request.send(null);
-	}
-
-	function updateMinorStates(){
-		var request = new XMLHttpRequest();
-		request.onreadystatechange = function(){
-			if (this.readyState == 4 && this.status == 200) {
-				if(this.responseText != null && this.responseText != ""){
-					console.log(this.responseText);
-
-					var json_arduino = JSON.parse(this.responseText)
-					$('.dropdown-menu li').children('a').eq(0).text("Master to Slave: " + json_arduino.master_slave);
-					$('.dropdown-menu li').children('a').eq(1).text("Slave to Master: " + json_arduino.slave_master);
-					$('.dropdown-menu li').children('a').eq(2).text("Master to Terminal: " + json_arduino.master_terminal);
-					$('.dropdown-menu li').children('a').eq(3).text("Terminal to Master: " + json_arduino.terminal_master);
-					$('#blink').text(json_arduino.motion);
-					$('#blink').checkMotion();
-				}
-
-			}
-		}
-		request.open("GET", "ajam", true);
-		request.send(null);
-	}
-
-	function updateMajorStates(){
+	function updateStates(){
 		var request = new XMLHttpRequest();
 		request.onreadystatechange = function(){
 			if (this.readyState == 4 && this.status == 200) {
@@ -398,8 +354,7 @@ $( document ).ready(function() {
 		request.send(null);
 	}
 
-	setInterval(updateMinorStates, 20000);
-	setInterval(updateMajorStates, 70000);
+	setInterval(updateStates, 20000);
 
 });
 

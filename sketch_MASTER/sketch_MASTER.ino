@@ -1,3 +1,4 @@
+#include <AltSoftSerial.h>
 #include <SoftwareSerial.h>
 #include <WiFiEsp.h>
 #include <LiquidCrystal.h>
@@ -14,7 +15,9 @@ const byte MSG_BUFFER = 128;
 const int WIFI_CONNECT_DELAY = 2000;
 
 //ESP's RX = 53 & ESP's TX = 52
-SoftwareSerial ESPserial(ESP_TX, ESP_RX);
+//SoftwareSerial ESPserial(ESP_TX, ESP_RX);
+//TX 46, RX 48
+AltSoftSerial ESPserial;
 WiFiEspServer server(HTTP_PORT);
 WiFiEspClient client;
 

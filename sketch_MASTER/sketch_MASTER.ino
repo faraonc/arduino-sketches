@@ -35,6 +35,8 @@ unsigned int ack_from_master_to_slave = 0;
 unsigned int ack_terminal = 0;
 unsigned int syn_terminal = 0;
 
+unsigned int MAX_VALUE = 65000;
+
 bool is_handshake_completed = false;
 bool is_syn_sent = false;
 
@@ -504,6 +506,77 @@ void sendHttpResponse()
   client.print(H32);
 }
 
+void incrementSynSlavePayload()
+{
+  if (syn_slave_payload >= MAX_VALUE)
+  {
+    syn_slave_payload = 0;
+  }
+  syn_slave_payload++;
+}
+
+void incrementSynSlave()
+{
+  if (syn_slave >= MAX_VALUE)
+  {
+    syn_slave = 0;
+  }
+  syn_slave++;
+}
+
+void incrementAckFromSlaveToMaster()
+{
+  if (ack_from_slave_to_master >= MAX_VALUE)
+  {
+    ack_from_slave_to_master = 0;
+  }
+  ack_from_slave_to_master++;
+}
+
+void incrementSyn()
+{
+  if (syn >= MAX_VALUE)
+  {
+    syn = 0;
+  }
+  syn++;
+}
+
+void incrementSynMasterPayload()
+{
+  if (syn_master_payload >= MAX_VALUE)
+  {
+    syn_master_payload = 0;
+  }
+  syn_master_payload += 2;
+}
+
+void incrementAckFromMasterToSlave()
+{
+  if (ack_from_master_to_slave >= MAX_VALUE)
+  {
+    ack_from_master_to_slave = 0;
+  }
+  ack_from_master_to_slave++;
+}
+
+void incrementAckTerminal()
+{
+  if (ack_terminal >= MAX_VALUE)
+  {
+    ack_terminal = 0;
+  }
+  ack_terminal++;
+}
+
+void incrementSynTerminal()
+{
+  if (syn_terminal >= MAX_VALUE)
+  {
+    syn_terminal = 0;
+  }
+  syn_terminal++;
+}
 
 void serviceClient()
 {
@@ -547,8 +620,8 @@ void serviceClient()
       // that's the end of the HTTP request, so send a response
       if (buf.endsWith("\r\n\r\n"))
       {
-        syn_terminal++;
-        ack_terminal++;
+        incrementSynTerminal();
+        incrementAckTerminal();
         if (http_req[0] == 'a' && http_req[1] == 'j' && http_req[2] == 'a' && http_req[3] == 'x')
         {
           sendAjaxRequest();
@@ -831,13 +904,13 @@ void decodeMsg()
 void sendAck()
 {
   Serial.write('K');
-  ack_from_master_to_slave++;
+  incrementAckFromMasterToSlave();
 }
 
 void sendSyn()
 {
   Serial.write('O');
-  syn++;
+  incrementSyn();
 }
 
 void checkMsg()
@@ -849,7 +922,7 @@ void checkMsg()
     if (!is_handshake_completed)
     {
       sendAck();
-      syn_slave++;
+      incrementSynSlave();
       is_handshake_completed = true;
       msg_buffer_timer = millis();
       is_msg_buffer_used = true;
@@ -857,7 +930,7 @@ void checkMsg()
     else
     {
       char c = (char)incoming_byte;
-      syn_slave_payload++;
+      incrementSynSlavePayload();
       if (c == 'S')
       {
         msg[msg_size] = c;
@@ -881,7 +954,7 @@ void sendMsg()
 
     if (((char)incoming_byte) == 'K')
     {
-      ack_from_slave_to_master++;
+      incrementAckFromSlaveToMaster();
       switch (syn_state)
       {
         case ENGLISH:
@@ -904,7 +977,7 @@ void sendMsg()
           Serial.write('D');
           Serial.write('S');
       }
-      syn_master_payload += 2;
+      incrementSynMasterPayload();
       is_syn_sent = false;
       syn_state = LAZY;
     }

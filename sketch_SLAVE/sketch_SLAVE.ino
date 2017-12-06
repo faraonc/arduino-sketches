@@ -199,8 +199,6 @@ unsigned long send_timer = 0;
 const unsigned long SEND_INTERVAL_DELAY = 60000;
 const unsigned long SEND_INIT_DELAY = 30000;
 unsigned long send_delay = SEND_INIT_DELAY;
-unsigned int syn = 0;
-unsigned int ack_master = 0;
 unsigned int incomingByte = 0;
 
 bool is_syn_sent = false;
@@ -694,7 +692,6 @@ void checkMsg()
     if (!is_handshake_completed)
     {
       sendAck();
-      ack_master++;
       is_handshake_completed = true;
       msg_buffer_timer = millis();
       is_msg_buffer_used = true;
@@ -747,7 +744,6 @@ void sendMsg()
         Serial.write('S');
         isSendingData = false;
       }
-      syn++;
       is_syn_sent = false;
       syn_state = LAZY;
     }

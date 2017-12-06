@@ -11,7 +11,6 @@ const byte LCD_SSID_MAX_SIZE = 9;
 const byte HTTP_PORT = 80;
 const byte ESP_RX = 53;
 const byte ESP_TX = 52;
-const byte MSG_BUFFER = 128;
 const int WIFI_CONNECT_DELAY = 2000;
 
 //ESP's RX = 53 & ESP's TX = 52
@@ -41,13 +40,14 @@ bool is_handshake_completed = false;
 bool is_syn_sent = false;
 
 byte incoming_byte;
+const byte MSG_BUFFER = 64;
 char msg[MSG_BUFFER];
 unsigned int msg_size = 0;
 bool is_msg_buffer_used = false;
 unsigned long msg_buffer_timer = 0;
-const int MSG_BUFFER_TIMEOUT = 3000;
-const byte MAX_DEFAULT_DATA_BUFFER = 10;
-
+const int MSG_BUFFER_TIMEOUT = 2500;
+const byte MAX_DEFAULT_DATA_BUFFER = 64;
+const byte MAX_DEFAULT_DATA_CHAR = 40;
 bool is_wifi_health_check_started = false;
 unsigned long wifi_health_timer = 0;
 const int WIFI_HEALTH_CHECK_TIMEOUT = 10000;
@@ -872,7 +872,7 @@ void translate()
         default_data[index] = c;
         index++;
         //overloaded
-        if (index >= 10)
+        if (index >= MAX_DEFAULT_DATA_CHAR)
         {
           index = 0;
           memset(default_data, 0, sizeof(MAX_DEFAULT_DATA_BUFFER));

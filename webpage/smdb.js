@@ -88,7 +88,7 @@ $( document ).ready(function() {
 		var smoke = parseInt($('#smoke-value').text());
 
 		// determine if the air quality is safe
-		if(co >= 50 || co2 >= 3000 || dust >= 0.5 || lpg >= 1000 || smoke >= 400)
+		if(co >= 50 || co2 >= 4000 || dust >= 0.5 || lpg >= 1000 || smoke >= 400)
 		{
 			this.css("color", "red").text("UNSAFE");
 		}else{

@@ -5,9 +5,9 @@
 #include <Keypad.h>
 
 /**------------------ WIFI Variables ------------------**/
-const char *SSID     = "Starxf";
-const char *PASSWORD = "Carsomyr";
-const byte LCD_SSID_MAX_SIZE = 6;
+const char *SSID     = "Conard James's iPhone";
+const char *PASSWORD = "12345678";
+const byte LCD_SSID_MAX_SIZE = 9;
 const byte HTTP_PORT = 80;
 const byte ESP_RX = 53;
 const byte ESP_TX = 52;

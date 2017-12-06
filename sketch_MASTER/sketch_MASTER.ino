@@ -875,7 +875,7 @@ void translate()
         if (index >= MAX_DEFAULT_DATA_CHAR)
         {
           index = 0;
-          memset(default_data, 0, sizeof(MAX_DEFAULT_DATA_BUFFER));
+          memset(default_data, 0, sizeof(default_data));
           break;
         }
     }
@@ -939,8 +939,11 @@ void checkMsg()
       }
       else
       {
-        msg[msg_size] = c;
-        msg_size++;
+        if (msg_size < MAX_DEFAULT_DATA_CHAR)
+        {
+          msg[msg_size] = c;
+          msg_size++;
+        }
       }
     }
   }

@@ -183,7 +183,7 @@ const int DUST_DELAY = 2000;
 
 /**------------------ Communication Variables ------------------**/
 const int MSG_BUFFER_TIMEOUT = 2000;
-const byte MSG_BUFFER = 2;
+
 enum
 {
   LAZY,
@@ -203,6 +203,7 @@ unsigned int incomingByte = 0;
 
 bool is_syn_sent = false;
 bool is_handshake_completed = false;
+const byte MSG_BUFFER = 2;
 char msg[MSG_BUFFER];
 byte msg_size = 0;
 bool is_msg_buffer_used = false;

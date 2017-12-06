@@ -183,7 +183,7 @@ const int DUST_DELAY = 2000;
 
 /**------------------ Communication Variables ------------------**/
 const int MSG_BUFFER_TIMEOUT = 2000;
-const byte MSG_BUFFER = 128;
+const byte MSG_BUFFER = 2;
 enum
 {
   LAZY,
@@ -648,27 +648,24 @@ void checkMsgBuffer()
 
 void decodeMsg()
 {
-  for (byte i = 0; i < msg_size; i++)
+  switch (msg[0])
   {
-    switch (msg[i])
-    {
-      case 'E':
-        lang = 'E';
-        updateLCD();
-        break;
+    case '{':
+      lang = 'E';
+      updateLCD();
+      break;
 
-      case 'P':
-        lang = 'P';
-        updateLCD();
-        break;
+    case '|':
+      lang = 'P';
+      updateLCD();
+      break;
 
-      case 'A':
-        greetGuest();
-        break;
+    case '}':
+      greetGuest();
+      break;
 
-      case 'D':
-        onDemand = true;
-    }
+    case '~':
+      onDemand = true;
   }
   clearMsgBuffer();
 }
@@ -705,8 +702,11 @@ void checkMsg()
       }
       else
       {
-        msg[msg_size] = c;
-        msg_size++;
+        if (msg_size == 0)
+        {
+          msg[msg_size] = c;
+          msg_size++;
+        }
       }
     }
   }

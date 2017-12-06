@@ -594,7 +594,7 @@ void serviceClient()
 
       // printing the stream to the serial monitor will slow down
       // the receiving of data from the ESP filling the serial buffer
-      Serial.write(c);
+      //      Serial.write(c);
 
       if (c == 'a' && http_req_i == 0)
       {
@@ -959,22 +959,22 @@ void sendMsg()
       {
         case ENGLISH:
 
-          Serial.write('E');
+          Serial.write('{');
           Serial.write('S');
           break;
 
         case SPANISH:
-          Serial.write('P');
+          Serial.write('|');
           Serial.write('S');
           break;
 
         case GUEST_ACK:
-          Serial.write('A');
+          Serial.write('}');
           Serial.write('S');
           break;
 
         case ON_DEMAND:
-          Serial.write('D');
+          Serial.write('~');
           Serial.write('S');
       }
       incrementSynMasterPayload();

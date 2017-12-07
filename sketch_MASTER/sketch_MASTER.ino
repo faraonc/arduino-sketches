@@ -40,14 +40,14 @@ bool is_handshake_completed = false;
 bool is_syn_sent = false;
 
 byte incoming_byte;
-const byte MSG_BUFFER = 64;
+const byte MSG_BUFFER = 40;
 char msg[MSG_BUFFER];
 unsigned int msg_size = 0;
 bool is_msg_buffer_used = false;
 unsigned long msg_buffer_timer = 0;
 const int MSG_BUFFER_TIMEOUT = 2500;
-const byte MAX_DEFAULT_DATA_BUFFER = 64;
-const byte MAX_DEFAULT_DATA_CHAR = 40;
+const byte MAX_DEFAULT_DATA_BUFFER = 8;
+const byte MAX_DEFAULT_DATA_CHAR = 8;
 bool is_wifi_health_check_started = false;
 unsigned long wifi_health_timer = 0;
 const int WIFI_HEALTH_CHECK_TIMEOUT = 10000;
@@ -801,7 +801,7 @@ void translate()
 {
   char default_data[MAX_DEFAULT_DATA_BUFFER];
   byte index = 0;
-  memset(default_data, 0, sizeof(default_data));
+  //memset(default_data, 0, sizeof(default_data));
   for (int i = 0 ; i < msg_size; i++)
   {
     char c = msg[i];
@@ -939,7 +939,7 @@ void checkMsg()
       }
       else
       {
-        if (msg_size < MAX_DEFAULT_DATA_CHAR)
+        if (msg_size < MSG_BUFFER)
         {
           msg[msg_size] = c;
           msg_size++;

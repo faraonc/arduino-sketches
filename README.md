@@ -1,4 +1,4 @@
-# BIMD 233 Final Project
+# CSS 427 Final Project
 The IoT device is a smart doorbell that consists of a master and slave Arduino devices.
 #### *The submission is not LIVE due to devices need to be running. The following error will occur as inspected by the browser:*
 

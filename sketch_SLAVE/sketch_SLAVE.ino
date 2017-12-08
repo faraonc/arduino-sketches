@@ -324,7 +324,7 @@ void checkButton()
         dingDong();
         if (isDebugging)
         {
-          Serial1.println("You Pressed the button");
+          Serial.println("You Pressed the button");
         }
       }
     }
@@ -364,7 +364,7 @@ void readPIR()
           syn_state = ACTIVE_MOTION;
           if (isDebugging)
           {
-            Serial1.println("Motion Detected!");
+            Serial.println("Motion Detected!");
           }
         }
       }
@@ -404,7 +404,7 @@ void readTempAndHumid()
     // Check if any reads failed and exit early (to try again).
     if (isnan(humidity) || isnan(fahrenheit) || isnan(temperature))
     {
-      //Serial1.println("Failed to read from DHT sensor!");
+      //Serial.println("Failed to read from DHT sensor!");
       DHTinit = false;
       return;
     }
@@ -428,8 +428,8 @@ void readPhotocell()
   else if ((millis() - photorTimer) >= PHOTOR_DELAY)
   {
     lightLevel = analogRead(PHOTOR_PIN);
-    //    Serial1.print("LightLevel: ");
-    //    Serial1.print(lightLevel);
+    //    Serial.print("LightLevel: ");
+    //    Serial.print(lightLevel);
     if (lightLevel < 100)
     {
       light_state = DARK;
@@ -465,8 +465,8 @@ void readRainSensor()
   {
     rainSReading = analogRead(RAINS_PIN);
     int range = map(rainSReading, 0, 1023, 0, 3);
-    //    Serial1.print("Rain Sensor Reading: ");
-    //    Serial1.print(rainSReading);
+    //    Serial.print("Rain Sensor Reading: ");
+    //    Serial.print(rainSReading);
     // range value:
     switch (range)
     {
@@ -476,7 +476,7 @@ void readRainSensor()
       case 1:    // Sensor getting wet
         rainS_state = LIGHT_RAIN;
         break;
-      case 2:    // Sensor dry - To shut this up delete the " Serial1.println("Not Raining"); " below.
+      case 2:    // Sensor dry - To shut this up delete the " Serial.println("Not Raining"); " below.
         rainS_state = DRY;
         break;
     }
@@ -781,72 +781,72 @@ void showData()
   }
   else if ( (millis() - debugTimer) > DEBUG_DELAY)
   {
-    Serial1.print ("Light :");
+    Serial.print ("Light :");
     switch (light_state)
     {
       case DARK:
-        Serial1.println (" DARK ");
+        Serial.println (" DARK ");
         break;
       case DIM:
-        Serial1.println (" DIM ");
+        Serial.println (" DIM ");
         break;
       case LIGHT:
-        Serial1.println (" LIGHT ");
+        Serial.println (" LIGHT ");
         break;
       case BRIGHT:
-        Serial1.println (" BRIGHT ");
+        Serial.println (" BRIGHT ");
         break;
       case VERY_BRIGHT:
-        Serial1.println (" VERY BRIGHT ");
+        Serial.println (" VERY BRIGHT ");
         break;
     }
 
-    Serial1.print ("Rain :");
+    Serial.print ("Rain :");
     switch (rainS_state)
     {
       case HEAVY_RAIN:
-        Serial1.println (" HEAVY RAIN ");
+        Serial.println (" HEAVY RAIN ");
         break;
       case LIGHT_RAIN:
-        Serial1.println (" LIGHT RAIN ");
+        Serial.println (" LIGHT RAIN ");
         break;
       case DRY:
-        Serial1.println (" DRY ");
+        Serial.println (" DRY ");
         break;
     }
 
-    Serial1.print ("Fahrenheit : ");
-    Serial1.println (fahrenheit);
-    Serial1.print ("Humidity : ");
-    Serial1.println (humidity);
-    Serial1.print ("Heat Index Factor: ");
-    Serial1.println (hif);
+    Serial.print ("Fahrenheit : ");
+    Serial.println (fahrenheit);
+    Serial.print ("Humidity : ");
+    Serial.println (humidity);
+    Serial.print ("Heat Index Factor: ");
+    Serial.println (hif);
 
-    Serial1.print("LPG : ");
-    Serial1.print(lpg);
-    Serial1.print("ppm");
-    Serial1.print("    ");
-    Serial1.print("CO : ");
-    Serial1.print(co);
-    Serial1.print("ppm");
-    Serial1.print("    ");
-    Serial1.print("SMOKE : ");
-    Serial1.print(smoke);
-    Serial1.print("ppm");
-    Serial1.println("");
-    Serial1.print("CO2 PPM : ");
-    Serial1.print(co2);
-    Serial1.print("ppm");
-    Serial1.print("    ");
-    Serial1.print("Corrected CO2 PPM : ");
-    Serial1.print(correctedCo2);
-    Serial1.print("ppm");
-    Serial1.println("");
-    Serial1.print("Dust : ");
-    Serial1.print(dustDensity);
-    Serial1.println("mg/m^3");
-    Serial1.print(dustVoMeasured);
-    Serial1.println("\n");
+    Serial.print("LPG : ");
+    Serial.print(lpg);
+    Serial.print("ppm");
+    Serial.print("    ");
+    Serial.print("CO : ");
+    Serial.print(co);
+    Serial.print("ppm");
+    Serial.print("    ");
+    Serial.print("SMOKE : ");
+    Serial.print(smoke);
+    Serial.print("ppm");
+    Serial.println("");
+    Serial.print("CO2 PPM : ");
+    Serial.print(co2);
+    Serial.print("ppm");
+    Serial.print("    ");
+    Serial.print("Corrected CO2 PPM : ");
+    Serial.print(correctedCo2);
+    Serial.print("ppm");
+    Serial.println("");
+    Serial.print("Dust : ");
+    Serial.print(dustDensity);
+    Serial.println("mg/m^3");
+    Serial.print(dustVoMeasured);
+    Serial.println("\n");
     debugInit = false;
   }
 }

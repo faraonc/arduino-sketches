@@ -58,7 +58,7 @@ byte http_req_i = 0;
 
 //client timer
 unsigned long client_timer = 0;
-const int CLIENT_TIMER_TIMEOUT = 5000;
+const int CLIENT_TIMER_TIMEOUT = 4000;
 
 enum
 {

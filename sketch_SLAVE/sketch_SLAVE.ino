@@ -263,8 +263,8 @@ void lcdBoot()
 
 void xbeeBoot()
 {
-  Serial.begin(9600);
-  while (!Serial)
+  Serial1.begin(9600);
+  while (!Serial1)
   {
     ;
   }
@@ -324,7 +324,7 @@ void checkButton()
         dingDong();
         if (isDebugging)
         {
-          Serial.println("You Pressed the button");
+          Serial1.println("You Pressed the button");
         }
       }
     }
@@ -364,7 +364,7 @@ void readPIR()
           syn_state = ACTIVE_MOTION;
           if (isDebugging)
           {
-            Serial.println("Motion Detected!");
+            Serial1.println("Motion Detected!");
           }
         }
       }
@@ -404,7 +404,7 @@ void readTempAndHumid()
     // Check if any reads failed and exit early (to try again).
     if (isnan(humidity) || isnan(fahrenheit) || isnan(temperature))
     {
-      //Serial.println("Failed to read from DHT sensor!");
+      //Serial1.println("Failed to read from DHT sensor!");
       DHTinit = false;
       return;
     }
@@ -428,8 +428,8 @@ void readPhotocell()
   else if ((millis() - photorTimer) >= PHOTOR_DELAY)
   {
     lightLevel = analogRead(PHOTOR_PIN);
-    //    Serial.print("LightLevel: ");
-    //    Serial.print(lightLevel);
+    //    Serial1.print("LightLevel: ");
+    //    Serial1.print(lightLevel);
     if (lightLevel < 100)
     {
       light_state = DARK;
@@ -465,8 +465,8 @@ void readRainSensor()
   {
     rainSReading = analogRead(RAINS_PIN);
     int range = map(rainSReading, 0, 1023, 0, 3);
-    //    Serial.print("Rain Sensor Reading: ");
-    //    Serial.print(rainSReading);
+    //    Serial1.print("Rain Sensor Reading: ");
+    //    Serial1.print(rainSReading);
     // range value:
     switch (range)
     {
@@ -476,7 +476,7 @@ void readRainSensor()
       case 1:    // Sensor getting wet
         rainS_state = LIGHT_RAIN;
         break;
-      case 2:    // Sensor dry - To shut this up delete the " Serial.println("Not Raining"); " below.
+      case 2:    // Sensor dry - To shut this up delete the " Serial1.println("Not Raining"); " below.
         rainS_state = DRY;
         break;
     }
@@ -673,20 +673,20 @@ void decodeMsg()
 
 void sendAck()
 {
-  Serial.write('K');
+  Serial1.write('K');
 }
 
 void sendSyn()
 {
-  Serial.write('O');
+  Serial1.write('O');
 }
 
 void checkMsg()
 {
-  // see if there's incoming serial data:
-  if (syn_state == LAZY && (Serial.available() > 0))
+  // see if there's incoming Serial1 data:
+  if (syn_state == LAZY && (Serial1.available() > 0))
   {
-    incomingByte = Serial.read();
+    incomingByte = Serial1.read();
     if (!is_handshake_completed && ((char)incomingByte) == 'O')
     {
       sendAck();
@@ -719,30 +719,30 @@ void checkMsg()
 */
 void sendMsg()
 {
-  if (syn_state != LAZY && (Serial.available() > 0))
+  if (syn_state != LAZY && (Serial1.available() > 0))
   {
-    incomingByte = Serial.read();
+    incomingByte = Serial1.read();
 
     if (((char)incomingByte) == 'K')
     {
       if (isButtonPressed)
       {
-        Serial.write('B');
-        Serial.write('S');
+        Serial1.write('B');
+        Serial1.write('S');
         isButtonPressed = false;
       }
 
       else if (isMotionDetected)
       {
-        Serial.write('M');
-        Serial.write('S');
+        Serial1.write('M');
+        Serial1.write('S');
         isMotionDetected = false;
       }
       else if (isSendingData)
       {
-        Serial.write('Z');
+        Serial1.write('Z');
         writeToMaster();
-        Serial.write('S');
+        Serial1.write('S');
         isSendingData = false;
       }
       is_syn_sent = false;
@@ -781,72 +781,72 @@ void showData()
   }
   else if ( (millis() - debugTimer) > DEBUG_DELAY)
   {
-    Serial.print ("Light :");
+    Serial1.print ("Light :");
     switch (light_state)
     {
       case DARK:
-        Serial.println (" DARK ");
+        Serial1.println (" DARK ");
         break;
       case DIM:
-        Serial.println (" DIM ");
+        Serial1.println (" DIM ");
         break;
       case LIGHT:
-        Serial.println (" LIGHT ");
+        Serial1.println (" LIGHT ");
         break;
       case BRIGHT:
-        Serial.println (" BRIGHT ");
+        Serial1.println (" BRIGHT ");
         break;
       case VERY_BRIGHT:
-        Serial.println (" VERY BRIGHT ");
+        Serial1.println (" VERY BRIGHT ");
         break;
     }
 
-    Serial.print ("Rain :");
+    Serial1.print ("Rain :");
     switch (rainS_state)
     {
       case HEAVY_RAIN:
-        Serial.println (" HEAVY RAIN ");
+        Serial1.println (" HEAVY RAIN ");
         break;
       case LIGHT_RAIN:
-        Serial.println (" LIGHT RAIN ");
+        Serial1.println (" LIGHT RAIN ");
         break;
       case DRY:
-        Serial.println (" DRY ");
+        Serial1.println (" DRY ");
         break;
     }
 
-    Serial.print ("Fahrenheit : ");
-    Serial.println (fahrenheit);
-    Serial.print ("Humidity : ");
-    Serial.println (humidity);
-    Serial.print ("Heat Index Factor: ");
-    Serial.println (hif);
+    Serial1.print ("Fahrenheit : ");
+    Serial1.println (fahrenheit);
+    Serial1.print ("Humidity : ");
+    Serial1.println (humidity);
+    Serial1.print ("Heat Index Factor: ");
+    Serial1.println (hif);
 
-    Serial.print("LPG : ");
-    Serial.print(lpg);
-    Serial.print("ppm");
-    Serial.print("    ");
-    Serial.print("CO : ");
-    Serial.print(co);
-    Serial.print("ppm");
-    Serial.print("    ");
-    Serial.print("SMOKE : ");
-    Serial.print(smoke);
-    Serial.print("ppm");
-    Serial.println("");
-    Serial.print("CO2 PPM : ");
-    Serial.print(co2);
-    Serial.print("ppm");
-    Serial.print("    ");
-    Serial.print("Corrected CO2 PPM : ");
-    Serial.print(correctedCo2);
-    Serial.print("ppm");
-    Serial.println("");
-    Serial.print("Dust : ");
-    Serial.print(dustDensity);
-    Serial.println("mg/m^3");
-    Serial.print(dustVoMeasured);
-    Serial.println("\n");
+    Serial1.print("LPG : ");
+    Serial1.print(lpg);
+    Serial1.print("ppm");
+    Serial1.print("    ");
+    Serial1.print("CO : ");
+    Serial1.print(co);
+    Serial1.print("ppm");
+    Serial1.print("    ");
+    Serial1.print("SMOKE : ");
+    Serial1.print(smoke);
+    Serial1.print("ppm");
+    Serial1.println("");
+    Serial1.print("CO2 PPM : ");
+    Serial1.print(co2);
+    Serial1.print("ppm");
+    Serial1.print("    ");
+    Serial1.print("Corrected CO2 PPM : ");
+    Serial1.print(correctedCo2);
+    Serial1.print("ppm");
+    Serial1.println("");
+    Serial1.print("Dust : ");
+    Serial1.print(dustDensity);
+    Serial1.println("mg/m^3");
+    Serial1.print(dustVoMeasured);
+    Serial1.println("\n");
     debugInit = false;
   }
 }
@@ -904,7 +904,7 @@ void tokenizeSendInt(unsigned int tempData)
   String s = String(tempData);
   for (byte i = 0; i < s.length(); i ++ )
   {
-    Serial.write( s.charAt(i));
+    Serial1.write( s.charAt(i));
   }
 }
 
@@ -916,7 +916,7 @@ void tokenizeSendFloat(float tempData, char type)
     String s = String(tempData, 0);
     for (byte i = 0; i < s.length(); i ++ )
     {
-      Serial.write( s.charAt(i));
+      Serial1.write( s.charAt(i));
     }
   }
   else if (type == 'D')
@@ -925,7 +925,7 @@ void tokenizeSendFloat(float tempData, char type)
     String s = String(tempData, 2);
     for (byte i = 0; i < 4; i ++ )
     {
-      Serial.write( s.charAt(i));
+      Serial1.write( s.charAt(i));
     }
   }
 }
@@ -935,56 +935,56 @@ void tokenizeSendFloat(float tempData, char type)
 */
 void writeToMaster()
 {
-  Serial.write('L');
+  Serial1.write('L');
   switch (light_state)
   {
     case DARK:
-      Serial.write('0');
+      Serial1.write('0');
       break;
     case DIM:
-      Serial.write('1');
+      Serial1.write('1');
       break;
     case LIGHT:
-      Serial.write('2');
+      Serial1.write('2');
       break;
     case BRIGHT:
-      Serial.write('3');
+      Serial1.write('3');
       break;
     case VERY_BRIGHT:
-      Serial.write('4');
+      Serial1.write('4');
   }
-  Serial.write('R');
+  Serial1.write('R');
   switch (rainS_state)
   {
     case HEAVY_RAIN:
-      Serial.write('0');
+      Serial1.write('0');
       break;
     case LIGHT_RAIN:
-      Serial.write('1');
+      Serial1.write('1');
       break;
     case DRY:
-      Serial.write('2');
+      Serial1.write('2');
   }
 
-  Serial.write('T');
+  Serial1.write('T');
   tokenizeSendFloat(fahrenheit, 'H');
 
-  Serial.write('H');
+  Serial1.write('H');
   tokenizeSendFloat(humidity, 'H');
 
-  Serial.write('G');
+  Serial1.write('G');
   tokenizeSendInt(lpg);
 
-  Serial.write('C');
+  Serial1.write('C');
   tokenizeSendInt(co);
 
-  Serial.write('E');
+  Serial1.write('E');
   tokenizeSendInt(smoke);
 
-  Serial.write('N');
+  Serial1.write('N');
   tokenizeSendInt(correctedCo2);
 
-  Serial.write('D');
+  Serial1.write('D');
   tokenizeSendFloat(dustDensity, 'D');
 }
 

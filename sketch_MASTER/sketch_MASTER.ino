@@ -298,8 +298,8 @@ void ledBoot()
 
 void xbeeBoot()
 {
-  Serial.begin(9600);
-  while (!Serial)
+  Serial1.begin(9600);
+  while (!Serial1)
   {
     ;
   }
@@ -908,22 +908,22 @@ void decodeMsg()
 
 void sendAck()
 {
-  Serial.write('K');
+  Serial1.write('K');
   incrementAckFromMasterToSlave();
 }
 
 void sendSyn()
 {
-  Serial.write('O');
+  Serial1.write('O');
   incrementSyn();
 }
 
 void checkMsg()
 {
   // see if there's incoming serial data:
-  if (syn_state == LAZY && (Serial.available() > 0))
+  if (syn_state == LAZY && (Serial1.available() > 0))
   {
-    incoming_byte = Serial.read();
+    incoming_byte = Serial1.read();
     if (!is_handshake_completed && ((char)incoming_byte) == 'O')
     {
       sendAck();
@@ -956,9 +956,9 @@ void checkMsg()
 
 void sendMsg()
 {
-  if (syn_state != LAZY && (Serial.available() > 0))
+  if (syn_state != LAZY && (Serial1.available() > 0))
   {
-    incoming_byte = Serial.read();
+    incoming_byte = Serial1.read();
 
     if (((char)incoming_byte) == 'K')
     {
@@ -967,23 +967,23 @@ void sendMsg()
       {
         case ENGLISH:
 
-          Serial.write('{');
-          Serial.write('S');
+          Serial1.write('{');
+          Serial1.write('S');
           break;
 
         case SPANISH:
-          Serial.write('|');
-          Serial.write('S');
+          Serial1.write('|');
+          Serial1.write('S');
           break;
 
         case GUEST_ACK:
-          Serial.write('}');
-          Serial.write('S');
+          Serial1.write('}');
+          Serial1.write('S');
           break;
 
         case ON_DEMAND:
-          Serial.write('~');
-          Serial.write('S');
+          Serial1.write('~');
+          Serial1.write('S');
       }
       incrementSynMasterPayload();
       is_syn_sent = false;

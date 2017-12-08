@@ -56,6 +56,10 @@ const int WIFI_HEALTH_CHECK_TIMEOUT = 10000;
 char http_req[4];
 byte http_req_i = 0;
 
+//client timer
+unsigned long client_timer = 0;
+const int CLIENT_TIMER_TIMEOUT = 5000;
+
 enum
 {
   LAZY,
@@ -580,11 +584,12 @@ void incrementSynTerminal()
 
 void serviceClient()
 {
+  client_timer = millis();
   // initialize the circular buffer
   buf.init();
 
   // loop while the client's connected
-  while (client.connected())
+  while (client.connected() && (millis() - client_timer) < CLIENT_TIMER_TIMEOUT)
   {
     // if there's bytes to read from the client,
     if (client.available())

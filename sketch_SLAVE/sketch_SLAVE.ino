@@ -902,7 +902,7 @@ void tokenizeSendInt(unsigned int tempData)
 {
   //Gases
   String s = String(tempData);
-  for (int i = 0; i < s.length(); i ++ )
+  for (byte i = 0; i < s.length(); i ++ )
   {
     Serial.write( s.charAt(i));
   }

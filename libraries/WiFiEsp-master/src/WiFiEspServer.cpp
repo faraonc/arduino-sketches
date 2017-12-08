@@ -30,7 +30,7 @@ WiFiEspServer::WiFiEspServer(uint16_t port)
 
 void WiFiEspServer::begin()
 {
-	LOGDEBUG(F("Starting server"));
+	// LOGDEBUG(F("Starting server"));
 
 	/* The ESP Module only allows socket 1 to be used for the server */
 #if 0
@@ -53,7 +53,7 @@ void WiFiEspServer::begin()
 	}
 	else
 	{
-		LOGERROR(F("Server failed to start"));
+		// LOGERROR(F("Server failed to start"));
 	}
 }
 

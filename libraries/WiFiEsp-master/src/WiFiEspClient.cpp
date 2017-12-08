@@ -99,7 +99,7 @@ int WiFiEspClient::connect(const char* host, uint16_t port, uint8_t protMode)
     }
 	else
 	{
-    	LOGERROR(F("No socket available"));
+    	// LOGERROR(F("No socket available"));
     	return 0;
     }
     return 1;
@@ -124,7 +124,7 @@ size_t WiFiEspClient::write(const uint8_t *buf, size_t size)
 	if (!r)
 	{
 		setWriteError();
-		LOGERROR1(F("Failed to write to socket"), _sock);
+		// LOGERROR1(F("Failed to write to socket"), _sock);
 		delay(4000);
 		stop();
 		return 0;
@@ -280,7 +280,7 @@ size_t WiFiEspClient::printFSH(const __FlashStringHelper *ifsh, bool appendCrLf)
 	if (!r)
 	{
 		setWriteError();
-		LOGERROR1(F("Failed to write to socket"), _sock);
+		// LOGERROR1(F("Failed to write to socket"), _sock);
 		delay(4000);
 		stop();
 		return 0;

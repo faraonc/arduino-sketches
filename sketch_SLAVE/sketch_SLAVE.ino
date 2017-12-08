@@ -27,7 +27,7 @@ bool isButtonPressed = false;
 
 /**------------------ PIR Variables ------------------**/
 const byte PIR_PIN = 22;
-const unsigned long DEBOUNCE_PIR_DELAY = 500;
+const unsigned long DEBOUNCE_PIR_DELAY = 5000;
 unsigned long lastPIRDebounceTime = 0;  // the last time the output pin was toggle
 int pirState = LOW;
 int lastPIRState = LOW;
@@ -148,7 +148,7 @@ const int DEBUG_DELAY = 3000;
 
 /**------------------ LCD Variables ------------------**/
 const byte LED_COL = 16;
-const unsigned int UPDATE_LCD_DELAY = 5000;
+const unsigned int UPDATE_LCD_DELAY = 1000;
 const int RS = 12, EN = 11, D4 = 5, D5 = 4, D6 = 3, D7 = 2;
 char lang = 'E';
 unsigned long lcdAckTimer = 0;
@@ -687,7 +687,7 @@ void checkMsg()
   if (syn_state == LAZY && (Serial.available() > 0))
   {
     incomingByte = Serial.read();
-    if (!is_handshake_completed)
+    if (!is_handshake_completed && ((char)incomingByte) == 'O')
     {
       sendAck();
       is_handshake_completed = true;

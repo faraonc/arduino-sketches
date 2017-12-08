@@ -924,7 +924,7 @@ void checkMsg()
   if (syn_state == LAZY && (Serial.available() > 0))
   {
     incoming_byte = Serial.read();
-    if (!is_handshake_completed)
+    if (!is_handshake_completed && ((char)incoming_byte) == 'O')
     {
       sendAck();
       incrementSynSlave();

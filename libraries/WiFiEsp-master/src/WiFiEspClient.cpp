@@ -86,7 +86,7 @@ int WiFiEspClient::connect(IPAddress ip, uint16_t port)
 /* Private method */
 int WiFiEspClient::connect(const char* host, uint16_t port, uint8_t protMode)
 {
-	LOGINFO1(F("Connecting to"), host);
+	// LOGINFO1(F("Connecting to"), host);
 
 	_sock = WiFiEspClass::getFreeSocket();
 
@@ -206,7 +206,7 @@ void WiFiEspClient::stop()
 	if (_sock == 255)
 		return;
 
-	LOGINFO1(F("Disconnecting "), _sock);
+	// LOGINFO1(F("Disconnecting "), _sock);
 
 	EspDrv::stopClient(_sock);
 

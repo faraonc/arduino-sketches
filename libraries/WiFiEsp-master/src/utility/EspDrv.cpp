@@ -106,7 +106,7 @@ void EspDrv::wifiDriverInit(Stream *espSerial)
 	}
 	else
 	{
-		LOGINFO1(F("Initilization successful -"), fwVersion);
+		// LOGINFO1(F("Initilization successful -"), fwVersion);
 	}
 }
 
@@ -156,7 +156,7 @@ bool EspDrv::wifiConnect(char* ssid, const char *passphrase)
 
 	if (ret==TAG_OK)
 	{
-		LOGINFO1(F("Connected to"), ssid);
+		// LOGINFO1(F("Connected to"), ssid);
 		return true;
 	}
 

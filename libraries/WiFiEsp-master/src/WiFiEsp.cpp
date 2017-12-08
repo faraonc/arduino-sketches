@@ -33,7 +33,7 @@ WiFiEspClass::WiFiEspClass()
 
 void WiFiEspClass::init(Stream *espSerial)
 {
-    LOGINFO(F("Initializing ESP module"));
+    // LOGINFO(F("Initializing ESP module"));
 	EspDrv::wifiDriverInit(espSerial);
 }
 

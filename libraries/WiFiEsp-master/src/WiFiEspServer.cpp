@@ -49,7 +49,7 @@ void WiFiEspServer::begin()
 
 	if (_started)
 	{
-		LOGINFO1(F("Server started on port"), _port);
+		// LOGINFO1(F("Server started on port"), _port);
 	}
 	else
 	{
@@ -64,7 +64,7 @@ WiFiEspClient WiFiEspServer::available(byte* status)
 	int bytes = EspDrv::availData(0);
 	if (bytes>0)
 	{
-		LOGINFO1(F("New client"), EspDrv::_connId);
+		// LOGINFO1(F("New client"), EspDrv::_connId);
 		WiFiEspClass::allocateSocket(EspDrv::_connId);
 		WiFiEspClient client(EspDrv::_connId);
 		return client;

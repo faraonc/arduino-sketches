@@ -1,9 +1,5 @@
 # Arduino
 The IoT device is a smart doorbell that consists of a master and slave Arduino devices.
-#### *The submission is not LIVE due to devices need to be running. The following error will occur as inspected by the browser:*
-
-```Failed to load file:///Users/faraonc/Documents/BIMD233/bimd233/project/final-project/site/ajax: Cross origin requests are only supported for protocol schemes: http, data, chrome, chrome-extension, https.```
-
 #### *There is no CSS file. Styling is done using JS and BootStrap to decrease library overhead.*
 
 ### Primary Source of inspiration
